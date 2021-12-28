@@ -19,8 +19,9 @@ class MainWidget(Widget):
     perspective_point_x = NumericProperty(0)
     perspective_point_y = NumericProperty(0)
 
+
     V_NB_LINES = 8
-    V_LINES_SPACING = .4 # percentage' in screen width
+    V_LINES_SPACING = .2 # percentage' in screen width
     vertical_lines = []
 
     H_NB_LINES = 15
@@ -31,13 +32,18 @@ class MainWidget(Widget):
     current_offset_y = 0
     current_y_loop = 0
 
-    SPEED_X = 12
+    SPEED_X = 9
     current_speed_x = 0
     current_offset_x = 0
 
     NB_TILES = 16
     tiles = []
     tiles_coordinates = []
+
+    SHIP_WIDTH = .1
+    SHIP_HEIGHT = 0.035
+    SHIP_BASE_Y = 0.04
+    ship = None
 
 
     def __init__(self, **kwargs):
@@ -46,6 +52,7 @@ class MainWidget(Widget):
         self.init_vertical_lines()
         self.init_horizontal_lines()
         self.init_tiles()
+        self.init_ship()
         self.generate_tiles_coordinates()
 
         if self.is_desktop():
@@ -59,6 +66,26 @@ class MainWidget(Widget):
         if platform in ('linux', 'windows', 'macosx'):
             return True
         return False
+
+    #def Image(self):
+
+    def init_ship(self):
+        with self.canvas:
+            Color(0, 0, 0)
+            self.ship = Triangle()
+            #self.ship = starship.png()
+
+    def update_ship(self):
+        center_x = self.width / 2
+        base_y = self.SHIP_BASE_Y * self.height
+        ship_half_width = self.SHIP_WIDTH * self.width / 2
+        ship_height = self.SHIP_HEIGHT * self.height
+
+        x1, y1 = self.transform(center_x-ship_half_width, base_y)
+        x2, y2 = self.transform(center_x, base_y + ship_height)
+        x3, y3 = self.transform(center_x + ship_half_width, base_y)
+
+        self.ship.points = [x1, y1, x2, y2, x3, y3]
 
     def init_tiles(self):
         with self.canvas:
@@ -175,6 +202,7 @@ class MainWidget(Widget):
     def update_horizontal_lines(self):
         start_index = -int(self.V_NB_LINES / 2) + 1
         end_index = start_index+self.V_NB_LINES-1
+
         xmin = self.get_line_x_from_index(start_index)
         xmax = self.get_line_x_from_index(end_index)
 
@@ -191,6 +219,7 @@ class MainWidget(Widget):
         self.update_horizontal_lines()
         self.current_offset_y += self.SPEED * time_factor
         self.update_tiles()
+        self.update_ship()
 
         spacing_y = self.H_LINES_SPACING * self.height
         if self.current_offset_y >= spacing_y:
