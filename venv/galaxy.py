@@ -7,10 +7,10 @@ Config.set('graphics', 'height', '400')
 from kivy import platform
 from kivy.core.window import Window
 from kivy.app import App
-from kivy.uix.widget import Widget
-from kivy.properties import NumericProperty, Clock
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line, Quad, Triangle
+from kivy.properties import NumericProperty, Clock
+from kivy.uix.widget import Widget
 
 
 class MainWidget(Widget):
@@ -21,18 +21,18 @@ class MainWidget(Widget):
 
 
     V_NB_LINES = 8
-    V_LINES_SPACING = .2 # percentage' in screen width
+    V_LINES_SPACING = .5 # percentage' in screen width
     vertical_lines = []
 
-    H_NB_LINES = 15
+    H_NB_LINES = 22
     H_LINES_SPACING = .1 # percentage' in screen height
     horizontal_lines = []
 
-    SPEED = 6
+    SPEED = .5
     current_offset_y = 0
     current_y_loop = 0
 
-    SPEED_X = 9
+    SPEED_X = 1.0
     current_speed_x = 0
     current_offset_x = 0
 
@@ -44,15 +44,17 @@ class MainWidget(Widget):
     SHIP_HEIGHT = 0.035
     SHIP_BASE_Y = 0.04
     ship = None
+    ship_coordinates = [(0, 0), (0, 0), (0, 0)]
 
 
     def __init__(self, **kwargs):
-        super(MainWidget, self). __init__(**kwargs)
+        super(MainWidget, self) .__init__(**kwargs)
         # print("INIT W:" + str(self.width) + " H:" + str(self.height))
         self.init_vertical_lines()
         self.init_horizontal_lines()
         self.init_tiles()
         self.init_ship()
+        self.pre_fill_tiles_coordinates()
         self.generate_tiles_coordinates()
 
         if self.is_desktop():
@@ -81,11 +83,35 @@ class MainWidget(Widget):
         ship_half_width = self.SHIP_WIDTH * self.width / 2
         ship_height = self.SHIP_HEIGHT * self.height
 
-        x1, y1 = self.transform(center_x-ship_half_width, base_y)
-        x2, y2 = self.transform(center_x, base_y + ship_height)
-        x3, y3 = self.transform(center_x + ship_half_width, base_y)
+        self.ship_coordinates[0] = (center_x-ship_half_width, base_y)
+        self.ship_coordinates[1] = (center_x, base_y + ship_height)
+        self.ship_coordinates[2] = (center_x + ship_half_width, base_y)
+
+        x1, y1 = self.transform(*self.ship_coordinates[0])
+        x2, y2 = self.transform(*self.ship_coordinates[1])
+        x3, y3 = self.transform(*self.ship_coordinates[2])
 
         self.ship.points = [x1, y1, x2, y2, x3, y3]
+
+    def check_ship_collision(self):
+        for i in range(0, len(self.tiles_coordinates)):
+            ti_x, ti_y = self.tiles_coordinates[i]
+            if ti_y > self.current_y_loop + 1:
+                return False
+            if self.check_ship_collision_with_tile(ti_x, ti_y):
+                return True
+        return False
+
+
+    def check_ship_collision_with_tile(self, ti_x, ti_y):
+        xmin, ymin = self.get_tile_coordinates(ti_x, ti_y)
+        xmax, ymax = self.get_tile_coordinates(ti_x + 1, ti_y + 1)
+        for i in range(0, 3):
+            px, py = self.ship_coordinates[i]
+            if xmin <= px <= xmax and ymin <= px <= ymax:
+                return True
+        return False
+
 
     def init_tiles(self):
         with self.canvas:
@@ -94,7 +120,7 @@ class MainWidget(Widget):
                 self.tiles.append(Quad())
 
     def pre_fill_tiles_coordinates(self):
-        for i in range(0, 10):
+        for i in range(0, 20):
             self.tiles_coordinates.append((0, i))
 
     def generate_tiles_coordinates(self):
@@ -151,7 +177,7 @@ class MainWidget(Widget):
 
     def get_line_x_from_index(self, index):
         central_line_x = self.perspective_point_x
-        spacing =self.V_LINES_SPACING * self.width
+        spacing = self.V_LINES_SPACING * self.width
         offset = index - 0.5
         line_x = central_line_x + offset*spacing + self.current_offset_x
         return line_x
@@ -217,9 +243,11 @@ class MainWidget(Widget):
         time_factor = dt*60
         self.update_vertical_lines()
         self.update_horizontal_lines()
-        self.current_offset_y += self.SPEED * time_factor
         self.update_tiles()
         self.update_ship()
+
+        speed_y = self.SPEED * self.height / 100
+        self.current_offset_y += speed_y * time_factor
 
         spacing_y = self.H_LINES_SPACING * self.height
         if self.current_offset_y >= spacing_y:
@@ -227,7 +255,11 @@ class MainWidget(Widget):
             self.current_y_loop += 1
             self.generate_tiles_coordinates()
 
-        self.current_offset_x += self.current_speed_x * time_factor
+        speed_x = self.current_speed_x * self.width / 100
+        self.current_offset_x += speed_x * time_factor
+
+        if not self.check_ship_collision():
+            print("GAME OVER")
 
 
 class GalaxyApp(App):
