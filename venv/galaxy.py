@@ -34,11 +34,11 @@ class MainWidget(RelativeLayout):
     H_LINES_SPACING = .1  # percentage' in screen height
     horizontal_lines = []
 
-    SPEED = .8
+    SPEED = .6
     current_offset_y = 0
     current_y_loop = 0
 
-    SPEED_X = 6.0
+    SPEED_X = 2.0
     current_speed_x = 0
     current_offset_x = 0
 
@@ -77,13 +77,10 @@ class MainWidget(RelativeLayout):
             return True
         return False
 
-    # def Image(self):
-
     def init_ship(self):
         with self.canvas:
             Color(0, 0, 0)
             self.ship = Triangle()
-            # self.ship = starship.png()
 
     def update_ship(self):
         center_x = self.width / 2
@@ -115,7 +112,7 @@ class MainWidget(RelativeLayout):
         xmax, ymax = self.get_tile_coordinates(ti_x + 1, ti_y + 1)
         for i in range(0, 3):
             px, py = self.ship_coordinates[i]
-            if xmin <= px <= xmax and ymin <= px <= ymax:
+            if xmin <= px <= xmax and ymin <= py <= ymax:
                 return True
         return False
 
@@ -243,7 +240,7 @@ class MainWidget(RelativeLayout):
             self.horizontal_lines[i].points = [x1, y1, x2, y2]
 
     def update(self, dt):
-        time_factor = dt * 60
+        time_factor = dt*60
         self.update_vertical_lines()
         self.update_horizontal_lines()
         self.update_tiles()
@@ -275,6 +272,5 @@ class MainWidget(RelativeLayout):
 
 class GalaxyApp(App):
     pass
-
 
 GalaxyApp().run()
