@@ -55,6 +55,9 @@ class MainWidget(RelativeLayout):
     state_game_over = False
     state_game_has_started = False
 
+    menu_title = StringProperty("G A L A X Y   R U N N E R   X")
+    menu_button_title = StringProperty("START")
+
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
         # print("INIT W:" + str(self.width) + " H:" + str(self.height))
@@ -62,8 +65,7 @@ class MainWidget(RelativeLayout):
         self.init_horizontal_lines()
         self.init_tiles()
         self.init_ship()
-        self.pre_fill_tiles_coordinates()
-        self.generate_tiles_coordinates()
+        self.reset_game()
 
         if self.is_desktop():
             self._keyboard = Window.request_keyboard(self.keyboard_closed, self)
@@ -71,6 +73,16 @@ class MainWidget(RelativeLayout):
             self._keyboard.bind(on_key_up=self.on_keyboard_up)
 
         Clock.schedule_interval(self.update, 1.0 / 60.0)
+
+    def reset_game(self):
+        self.current_offset_y = 0
+        self.current_y_loop = 0
+        self.current_speed_x = 0
+        self.current_offset_x = 0
+        self.tiles_coordinates = []
+        self.pre_fill_tiles_coordinates()
+        self.generate_tiles_coordinates()
+        self.state_game_over = False
 
     def is_desktop(self):
         if platform in ('linux', 'windows', 'macosx'):
@@ -123,7 +135,7 @@ class MainWidget(RelativeLayout):
                 self.tiles.append(Quad())
 
     def pre_fill_tiles_coordinates(self):
-        for i in range(0, 10):
+        for i in range(0, 15):
             self.tiles_coordinates.append((0, i))
 
     def generate_tiles_coordinates(self):
@@ -262,10 +274,13 @@ class MainWidget(RelativeLayout):
 
         if not self.check_ship_collision() and not self.state_game_over:
             self.state_game_over = True
+            self.menu_title = "G  A  M  E    O  V  E  R"
+            self.menu_button_title = "RESTART"
             self.menu_widget.opacity = 1
             print("GAME OVER")
 
     def on_menu_button_pressed(self):
+        self.reset_game()
         self.state_game_has_started = True
         self.menu_widget.opacity = 0
 
