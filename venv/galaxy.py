@@ -55,8 +55,9 @@ class MainWidget(RelativeLayout):
     state_game_over = False
     state_game_has_started = False
 
-    menu_title = StringProperty("G A L A X Y   R U N N E R   X")
+    menu_title = StringProperty("G A L A X Y   R U N N E R ")
     menu_button_title = StringProperty("START")
+    score_txt = StringProperty()
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
@@ -80,6 +81,7 @@ class MainWidget(RelativeLayout):
         self.current_speed_x = 0
         self.current_offset_x = 0
         self.tiles_coordinates = []
+        self.score_txt = "SCORE: " + str(self.current_y_loop)
         self.pre_fill_tiles_coordinates()
         self.generate_tiles_coordinates()
         self.state_game_over = False
@@ -91,7 +93,7 @@ class MainWidget(RelativeLayout):
 
     def init_ship(self):
         with self.canvas:
-            Color(0, 0, 0)
+            Color(0, 0, 2)
             self.ship = Triangle()
 
     def update_ship(self):
@@ -266,6 +268,7 @@ class MainWidget(RelativeLayout):
             while self.current_offset_y >= spacing_y:
                 self.current_offset_y -= spacing_y
                 self.current_y_loop += 1
+                self.score_txt = "SCORE: " + str(self.current_y_loop)
                 self.generate_tiles_coordinates()
                 print("loop : " + str(self.current_y_loop))
 
