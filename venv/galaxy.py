@@ -1,4 +1,4 @@
-# This is an Advanced Galaxy Runner Desktop Kivy/Python App written in Python 3.9
+# This is an Advanced Galaxy Runner Desktop Kivy/Python App written in Python 3.8
 import random
 from kivy.config import Config
 from kivy.core.audio import SoundLoader
