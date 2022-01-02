@@ -326,8 +326,6 @@ class MainWidget(RelativeLayout):
         self.menu_widget.opacity = 0
 
 
-
-
 class GalaxyApp(App):
     pass
 
