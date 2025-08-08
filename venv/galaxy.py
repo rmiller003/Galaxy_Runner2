@@ -72,7 +72,8 @@ class MainWidget(RelativeLayout):
     menu_button_title = StringProperty("START")
     score_txt = StringProperty()
     shield_txt = StringProperty()
-    shield_level = NumericProperty(3)
+    shield_level = NumericProperty(4)
+    last_life_award_score = NumericProperty(0)
 
     sound_begin = None
     sound_begin = None
@@ -135,8 +136,9 @@ class MainWidget(RelativeLayout):
         self.obstacles_coordinates = []
         self.lasers = []
         self.explosions = []
-        self.shield_level = 3
-        self.shield_txt = "SHIELDS: " + str(self.shield_level)
+        self.shield_level = 4
+        self.last_life_award_score = 0
+        self.shield_txt = "LIVES: " + str(self.shield_level)
         self.score_txt = "SCORE: " + str(self.current_y_loop)
         self.pre_fill_tiles_coordinates()
         self.generate_tiles_coordinates()
@@ -469,9 +471,20 @@ class MainWidget(RelativeLayout):
                 distance = (dx**2 + dy**2)**0.5
                 if distance < shield_diameter/2 + obstacle_widget.size[0]/2:
                     self.obstacles_coordinates.remove(obstacle_coord)
+
+                    # Add explosion
+                    explosion = Rectangle(
+                        source="images/explosion.jpg",
+                        pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
+                        size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                    )
+                    self.explosions.append(explosion)
+                    self.canvas.add(explosion)
+
                     obstacle_widget.size = (0, 0)
                     if self.sound_explosion:
                         self.sound_explosion.play()
+                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
 
     def update(self, dt):
         time_factor = dt*60
@@ -492,6 +505,10 @@ class MainWidget(RelativeLayout):
                 self.current_offset_y -= spacing_y
                 self.current_y_loop += 1
                 self.score_txt = "SCORE: " + str(self.current_y_loop)
+                if self.current_y_loop >= self.last_life_award_score + 50:
+                    self.last_life_award_score += 50
+                    self.shield_level += 1
+                    self.shield_txt = "LIVES: " + str(self.shield_level)
                 self.generate_tiles_coordinates()
                 print("loop : " + str(self.current_y_loop))
 
@@ -506,7 +523,7 @@ class MainWidget(RelativeLayout):
             for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
                 if self.check_ship_collision_with_tile(obstacle_coord[0], obstacle_coord[1]):
                     self.shield_level -= 1
-                    self.shield_txt = "SHIELDS: " + str(self.shield_level)
+                    self.shield_txt = "LIVES: " + str(self.shield_level)
                     self.obstacles_coordinates.remove(obstacle_coord)
                     self.obstacles[i].size = (0, 0)
                     if self.shield_level == 0:
