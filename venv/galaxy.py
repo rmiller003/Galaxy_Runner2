@@ -127,16 +127,10 @@ class MainWidget(RelativeLayout):
         return True
 
     def on_touch_down(self, touch):
-        if not self.state_game_over and self.state_game_has_started:
-            if touch.x < self.width / 2:
-                self.current_speed_x = self.SPEED_X
-            else:
-                self.current_speed_x = -self.SPEED_X
-        return super(MainWidget, self).on_touch_down(touch)
+        return super().on_touch_down(touch)
 
     def on_touch_up(self, touch):
-        self.current_speed_x = 0
-        return True
+        return super().on_touch_up(touch)
 
     def transform(self, x, y):
         #return self.transform_2D(x, y)
