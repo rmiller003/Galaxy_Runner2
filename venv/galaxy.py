@@ -4,6 +4,8 @@ from kivy.config import Config
 from kivy.core.audio import SoundLoader
 from kivy.lang import Builder
 from kivy.uix.relativelayout import RelativeLayout
+from kivy.properties import BooleanProperty
+
 
 Config.set('graphics', 'width', '1200')
 Config.set('graphics', 'height', '600')
