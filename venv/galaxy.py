@@ -13,6 +13,7 @@ from kivy.core.window import Window
 from kivy.app import App
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line, Quad, Triangle, Ellipse, Rectangle
+from kivy.graphics import InstructionGroup
 from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty
 from kivy.uix.widget import Widget
 
@@ -53,6 +54,9 @@ class MainWidget(RelativeLayout):
 
     explosions = []
 
+    shield_active = BooleanProperty(False)
+    shield_instruction_group = None
+
     SHIP_WIDTH = .1
     SHIP_HEIGHT = 0.035
     SHIP_BASE_Y = 0.04
@@ -85,6 +89,12 @@ class MainWidget(RelativeLayout):
         self.init_tiles()
         self.init_obstacles()
         self.init_ship()
+
+        self.shield_instruction_group = InstructionGroup()
+        self.shield_graphic = Ellipse()
+        self.shield_instruction_group.add(Color(0, 0, 1, 0.5))
+        self.shield_instruction_group.add(self.shield_graphic)
+
         self.reset_game()
 
         Window.bind(on_key_down=self._on_keyboard_down)
@@ -102,10 +112,12 @@ class MainWidget(RelativeLayout):
         self.sound_restart = SoundLoader.load("audio/restart.wav")
         self.sound_laser = SoundLoader.load("audio/laser.wav")
         self.sound_explosion = SoundLoader.load("audio/boom.wav")
+        self.sound_shield = SoundLoader.load("audio/restart.wav")
 
         self.sound_music1.volume = 1
         self.sound_laser.volume = .25
         self.sound_explosion.volume = .25
+        self.sound_shield.volume = .25
         self.sound_begin.volume = .25
         self.sound_galaxy.volume = .25
         self.sound_gameover_voice.volume = .25
@@ -142,6 +154,8 @@ class MainWidget(RelativeLayout):
             self.on_menu_button_pressed()
         elif key == 32: # spacebar
             self.fire_laser()
+        elif key == 273: # up arrow
+            self.activate_shield()
         return True
 
     def _on_keyboard_up(self, window, key, *args):
@@ -434,6 +448,29 @@ class MainWidget(RelativeLayout):
 
                     break
 
+    def update_shield(self):
+        if self.shield_active:
+            shield_diameter = self.width * self.SHIP_WIDTH * 1.2
+            self.shield_graphic.size = (shield_diameter, shield_diameter)
+            center_x = self.ship.points[2]
+            y_nose = self.ship.points[3]
+            y_base = self.ship.points[1]
+            center_y = y_base + (y_nose - y_base) / 2
+            self.shield_graphic.pos = (center_x - shield_diameter / 2, center_y - shield_diameter / 2)
+
+            for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
+                obstacle_widget = self.obstacles[i]
+                if obstacle_widget.size == [0, 0]:
+                    continue
+                dx = self.shield_graphic.pos[0] + shield_diameter/2 - (obstacle_widget.pos[0] + obstacle_widget.size[0]/2)
+                dy = self.shield_graphic.pos[1] + shield_diameter/2 - (obstacle_widget.pos[1] + obstacle_widget.size[1]/2)
+                distance = (dx**2 + dy**2)**0.5
+                if distance < shield_diameter/2 + obstacle_widget.size[0]/2:
+                    self.obstacles_coordinates.remove(obstacle_coord)
+                    obstacle_widget.size = (0, 0)
+                    if self.sound_explosion:
+                        self.sound_explosion.play()
+
     def update(self, dt):
         time_factor = dt*60
         self.update_vertical_lines()
@@ -442,6 +479,7 @@ class MainWidget(RelativeLayout):
         self.update_obstacles()
         self.update_lasers()
         self.update_ship()
+        self.update_shield()
 
         if not self.state_game_over and self.state_game_has_started:
             speed_y = self.SPEED * self.height / 100
@@ -505,6 +543,18 @@ class MainWidget(RelativeLayout):
                 y = self.ship.points[3]
                 laser = Line(points=[x, y, x, y + 10], width=2)
                 self.lasers.append(laser)
+
+    def activate_shield(self):
+        if not self.shield_active and not self.state_game_over:
+            self.shield_active = True
+            if self.sound_shield:
+                self.sound_shield.play()
+            self.canvas.add(self.shield_instruction_group)
+            Clock.schedule_once(self.deactivate_shield, 5)
+
+    def deactivate_shield(self, dt):
+        self.shield_active = False
+        self.canvas.remove(self.shield_instruction_group)
 
     def on_menu_button_pressed(self):
         if self.state_game_over:
