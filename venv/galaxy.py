@@ -44,6 +44,13 @@ class MainWidget(RelativeLayout):
     tiles = []
     tiles_coordinates = []
 
+    NB_OBSTACLES = 10
+    obstacles = []
+    obstacles_coordinates = []
+
+    SPEED_LASER = 6.0
+    lasers = []
+
     SHIP_WIDTH = .1
     SHIP_HEIGHT = 0.035
     SHIP_BASE_Y = 0.04
@@ -72,6 +79,7 @@ class MainWidget(RelativeLayout):
         self.init_vertical_lines()
         self.init_horizontal_lines()
         self.init_tiles()
+        self.init_obstacles()
         self.init_ship()
         self.reset_game()
 
@@ -88,8 +96,10 @@ class MainWidget(RelativeLayout):
         self.sound_gameover_voice = SoundLoader.load("audio/gameover_voice.wav")
         self.sound_music1 = SoundLoader.load("audio/music1.wav")
         self.sound_restart = SoundLoader.load("audio/restart.wav")
+        self.sound_laser = SoundLoader.load("audio/begin.wav")
 
         self.sound_music1.volume = 1
+        self.sound_laser.volume = .25
         self.sound_begin.volume = .25
         self.sound_galaxy.volume = .25
         self.sound_gameover_voice.volume = .25
@@ -102,6 +112,7 @@ class MainWidget(RelativeLayout):
         self.current_speed_x = 0
         self.current_offset_x = 0
         self.tiles_coordinates = []
+        self.obstacles_coordinates = []
         self.score_txt = "SCORE: " + str(self.current_y_loop)
         self.pre_fill_tiles_coordinates()
         self.generate_tiles_coordinates()
@@ -119,6 +130,8 @@ class MainWidget(RelativeLayout):
             self.current_speed_x = -self.SPEED_X
         elif key == 13:  # enter
             self.on_menu_button_pressed()
+        elif key == 32: # spacebar
+            self.fire_laser()
         return True
 
     def _on_keyboard_up(self, window, key, *args):
@@ -191,11 +204,26 @@ class MainWidget(RelativeLayout):
                 return True
         return False
 
+    def check_obstacle_collision(self):
+        for i in range(0, len(self.obstacles_coordinates)):
+            ti_x, ti_y = self.obstacles_coordinates[i]
+            if ti_y > self.current_y_loop + 1:
+                return False
+            if self.check_ship_collision_with_tile(ti_x, ti_y):
+                return True
+        return False
+
     def init_tiles(self):
         with self.canvas:
             Color(1, 1, 1)
             for i in range(0, self.NB_TILES):
                 self.tiles.append(Quad())
+
+    def init_obstacles(self):
+        with self.canvas:
+            Color(1, 0, 0)
+            for i in range(0, self.NB_OBSTACLES):
+                self.obstacles.append(Quad())
 
     def pre_fill_tiles_coordinates(self):
         for i in range(0, 15):
@@ -246,6 +274,18 @@ class MainWidget(RelativeLayout):
 
         print("foo2")
 
+        # Generate obstacles
+        for i in range(len(self.obstacles_coordinates) - 1, -1, -1):
+            if self.obstacles_coordinates[i][1] < self.current_y_loop:
+                del self.obstacles_coordinates[i]
+
+        if len(self.obstacles_coordinates) == 0:
+            # Place obstacles on the newly generated tiles
+            # This is just a simple way to generate some obstacles for now
+            for i in range(10, len(self.tiles_coordinates), 20):
+                if len(self.obstacles_coordinates) < self.NB_OBSTACLES:
+                    self.obstacles_coordinates.append(self.tiles_coordinates[i])
+
     def init_vertical_lines(self):
         with self.canvas:
             Color(1, 1, 1)
@@ -272,7 +312,9 @@ class MainWidget(RelativeLayout):
         return x, y
 
     def update_tiles(self):
-        for i in range(0, self.NB_TILES):
+        for i in range(0, len(self.tiles_coordinates)):
+            if i >= self.NB_TILES:
+                break
             tile = self.tiles[i]
             tile_coordinates = self.tiles_coordinates[i]
             xmin, ymin = self.get_tile_coordinates(tile_coordinates[0], tile_coordinates[1])
@@ -284,6 +326,22 @@ class MainWidget(RelativeLayout):
             x4, y4 = self.transform(xmax, ymin)
 
             tile.points = [x1, y1, x2, y2, x3, y3, x4, y4]
+
+    def update_obstacles(self):
+        for i in range(0, len(self.obstacles_coordinates)):
+            if i >= self.NB_OBSTACLES:
+                break
+            obstacle = self.obstacles[i]
+            obstacle_coordinates = self.obstacles_coordinates[i]
+            xmin, ymin = self.get_tile_coordinates(obstacle_coordinates[0], obstacle_coordinates[1])
+            xmax, ymax = self.get_tile_coordinates(obstacle_coordinates[0] + 1, obstacle_coordinates[1] + 1)
+
+            x1, y1 = self.transform(xmin, ymin)
+            x2, y2 = self.transform(xmin, ymax)
+            x3, y3 = self.transform(xmax, ymax)
+            x4, y4 = self.transform(xmax, ymin)
+
+            obstacle.points = [x1, y1, x2, y2, x3, y3, x4, y4]
 
     def update_vertical_lines(self):
         start_index = -int(self.V_NB_LINES / 2) + 1
@@ -314,11 +372,47 @@ class MainWidget(RelativeLayout):
             x2, y2 = self.transform(xmax, line_y)
             self.horizontal_lines[i].points = [x1, y1, x2, y2]
 
+    def update_lasers(self):
+        for laser in self.lasers[:]:
+            points = laser.points
+            points[1] += self.SPEED_LASER
+            points[3] += self.SPEED_LASER
+            laser.points = points
+
+            if laser.points[1] > self.height:
+                self.lasers.remove(laser)
+                self.canvas.remove(laser)
+                continue
+
+            # Collision detection
+            laser_x = laser.points[0]
+            laser_y = laser.points[3]
+            for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
+                obstacle_widget = self.obstacles[i]
+                if not obstacle_widget.points: # already hit
+                    continue
+
+                min_x = min(obstacle_widget.points[0::2])
+                max_x = max(obstacle_widget.points[0::2])
+                min_y = min(obstacle_widget.points[1::2])
+                max_y = max(obstacle_widget.points[1::2])
+
+                if min_x < laser_x < max_x and min_y < laser_y < max_y:
+                    # Collision
+                    self.lasers.remove(laser)
+                    self.canvas.remove(laser)
+                    self.obstacles_coordinates.remove(obstacle_coord)
+                    # "Remove" obstacle by making it a point at origin
+                    obstacle_widget.points = [0,0,0,0,0,0,0,0]
+                    break
+
     def update(self, dt):
         time_factor = dt*60
         self.update_vertical_lines()
         self.update_horizontal_lines()
         self.update_tiles()
+        self.update_obstacles()
+        self.update_lasers()
         self.update_ship()
 
         if not self.state_game_over and self.state_game_has_started:
@@ -336,19 +430,32 @@ class MainWidget(RelativeLayout):
             speed_x = self.current_speed_x * self.width / 100
             self.current_offset_x += speed_x * time_factor
 
-        if not self.check_ship_collision() and not self.state_game_over:
-            self.state_game_over = True
-            self.menu_title = "G  A  M  E    O  V  E  R"
-            self.menu_button_title = "RESTART"
-            self.menu_widget.opacity = 1
-            self.sound_music1.stop()
-            self.sound_gameover_impact.play()
-            Clock.schedule_once(self.play_game_over_voice_sound, 3)
-            print("GAME OVER")
+        if not self.state_game_over:
+            is_on_path = self.check_ship_collision()
+            collided_with_obstacle = self.check_obstacle_collision()
+            if not is_on_path or collided_with_obstacle:
+                self.state_game_over = True
+                self.menu_title = "G  A  M  E    O  V  E  R"
+                self.menu_button_title = "RESTART"
+                self.menu_widget.opacity = 1
+                self.sound_music1.stop()
+                self.sound_gameover_impact.play()
+                Clock.schedule_once(self.play_game_over_voice_sound, 3)
+                print("GAME OVER")
 
     def play_game_over_voice_sound(self, dt):
         if self.state_game_over:
             self.sound_gameover_voice.play()
+
+    def fire_laser(self):
+        if not self.state_game_over and self.state_game_has_started:
+            self.sound_laser.play()
+            with self.canvas:
+                Color(1, 1, 0)
+                x = self.ship.points[2]
+                y = self.ship.points[3]
+                laser = Line(points=[x, y, x, y + 10], width=2)
+                self.lasers.append(laser)
 
     def on_menu_button_pressed(self):
         if self.state_game_over:
