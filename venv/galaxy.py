@@ -20,9 +20,6 @@ Builder.load_file("menu.kv")
 
 
 class MainWidget(RelativeLayout):
-    from transform import transform, transform_2D, transform_perspective
-    from user_actions import keyboard_closed, on_keyboard_up, on_keyboard_down, on_touch_up, on_touch_down
-
     menu_widget = ObjectProperty()
     perspective_point_x = NumericProperty(0)
     perspective_point_y = NumericProperty(0)
@@ -116,6 +113,57 @@ class MainWidget(RelativeLayout):
         if platform in ('linux', 'windows', 'macosx'):
             return True
         return False
+
+    def keyboard_closed(self):
+        self._keyboard.unbind(on_key_down=self.on_keyboard_down)
+        self._keyboard.unbind(on_key_up=self.on_keyboard_up)
+        self._keyboard = None
+
+    def on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        if keycode[1] == 'left':
+            self.current_speed_x = -self.SPEED_X
+        elif keycode[1] == 'right':
+            self.current_speed_x = self.SPEED_X
+        elif keycode[1] == 'enter':
+            self.on_menu_button_pressed()
+        return True
+
+    def on_keyboard_up(self, keyboard, keycode):
+        self.current_speed_x = 0
+        return True
+
+    def on_touch_down(self, touch):
+        if not self.state_game_over and self.state_game_has_started:
+            if touch.x < self.width / 2:
+                self.current_speed_x = self.SPEED_X
+            else:
+                self.current_speed_x = -self.SPEED_X
+        return super(MainWidget, self).on_touch_down(touch)
+
+    def on_touch_up(self, touch):
+        self.current_speed_x = 0
+        return True
+
+    def transform(self, x, y):
+        #return self.transform_2D(x, y)
+        return self.transform_perspective(x, y)
+
+    def transform_2D(self, x, y):
+        return int(x), int(y)
+
+    def transform_perspective(self, x, y):
+        lin_y = y * self.perspective_point_y / self.height
+        if lin_y > self.perspective_point_y:
+            lin_y = self.perspective_point_y
+
+        diff_x = x - self.perspective_point_x
+        diff_y = self.perspective_point_y - lin_y
+        factor_y = diff_y / self.perspective_point_y
+        factor_y = pow(factor_y, 4)
+        tr_x = self.perspective_point_x + diff_x * factor_y
+        tr_y = self.perspective_point_y - factor_y * self.perspective_point_y
+
+        return int(tr_x), int(tr_y)
 
     def init_ship(self):
         with self.canvas:
