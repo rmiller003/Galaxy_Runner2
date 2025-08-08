@@ -12,7 +12,7 @@ from kivy import platform
 from kivy.core.window import Window
 from kivy.app import App
 from kivy.graphics.context_instructions import Color
-from kivy.graphics.vertex_instructions import Line, Quad, Triangle, Ellipse
+from kivy.graphics.vertex_instructions import Line, Quad, Triangle, Ellipse, Rectangle
 from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty
 from kivy.uix.widget import Widget
 
@@ -50,6 +50,8 @@ class MainWidget(RelativeLayout):
 
     SPEED_LASER = 6.0
     lasers = []
+
+    explosions = []
 
     SHIP_WIDTH = .1
     SHIP_HEIGHT = 0.035
@@ -96,10 +98,12 @@ class MainWidget(RelativeLayout):
         self.sound_gameover_voice = SoundLoader.load("audio/gameover_voice.wav")
         self.sound_music1 = SoundLoader.load("audio/music1.wav")
         self.sound_restart = SoundLoader.load("audio/restart.wav")
-        self.sound_laser = SoundLoader.load("audio/begin.wav")
+        self.sound_laser = SoundLoader.load("audio/laser.wav")
+        self.sound_explosion = SoundLoader.load("audio/boom.wav")
 
         self.sound_music1.volume = 1
         self.sound_laser.volume = .25
+        self.sound_explosion.volume = .25
         self.sound_begin.volume = .25
         self.sound_galaxy.volume = .25
         self.sound_gameover_voice.volume = .25
@@ -113,6 +117,8 @@ class MainWidget(RelativeLayout):
         self.current_offset_x = 0
         self.tiles_coordinates = []
         self.obstacles_coordinates = []
+        self.lasers = []
+        self.explosions = []
         self.score_txt = "SCORE: " + str(self.current_y_loop)
         self.pre_fill_tiles_coordinates()
         self.generate_tiles_coordinates()
@@ -412,12 +418,25 @@ class MainWidget(RelativeLayout):
 
                 if min_x < laser_x < max_x and min_y < laser_y < max_y:
                     # Collision
-                    self.sound_gameover_impact.play()
+                    self.sound_explosion.play()
                     self.lasers.remove(laser)
                     self.canvas.remove(laser)
                     self.obstacles_coordinates.remove(obstacle_coord)
+
+                    # Add explosion
+                    explosion = Rectangle(
+                        source="images/explosion.jpg",
+                        pos=obstacle_widget.pos,
+                        size=obstacle_widget.size
+                    )
+                    self.explosions.append(explosion)
+                    self.canvas.add(explosion)
+
                     # "Remove" obstacle by making it size 0
                     obstacle_widget.size = (0, 0)
+
+                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+
                     break
 
     def update(self, dt):
@@ -460,6 +479,11 @@ class MainWidget(RelativeLayout):
     def play_game_over_voice_sound(self, dt):
         if self.state_game_over:
             self.sound_gameover_voice.play()
+
+    def remove_explosion(self, explosion):
+        if explosion in self.explosions:
+            self.explosions.remove(explosion)
+            self.canvas.remove(explosion)
 
     def fire_laser(self):
         if not self.state_game_over and self.state_game_has_started:
