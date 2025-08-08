@@ -112,7 +112,7 @@ class MainWidget(RelativeLayout):
         self.sound_restart = SoundLoader.load("audio/restart.wav")
         self.sound_laser = SoundLoader.load("audio/laser.wav")
         self.sound_explosion = SoundLoader.load("audio/boom.wav")
-        self.sound_shield = SoundLoader.load("audio/restart.wav")
+        self.sound_shield = SoundLoader.load("audio/shields.wav")
 
         self.sound_music1.volume = 1
         self.sound_laser.volume = .25
