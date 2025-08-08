@@ -5,8 +5,8 @@ from kivy.core.audio import SoundLoader
 from kivy.lang import Builder
 from kivy.uix.relativelayout import RelativeLayout
 
-Config.set('graphics', 'width', '900')
-Config.set('graphics', 'height', '400')
+Config.set('graphics', 'width', '1200')
+Config.set('graphics', 'height', '600')
 
 from kivy import platform
 from kivy.core.window import Window
@@ -114,9 +114,9 @@ class MainWidget(RelativeLayout):
 
     def _on_keyboard_down(self, window, key, *args):
         if key == 276:  # left
-            self.current_speed_x = -self.SPEED_X
-        elif key == 275:  # right
             self.current_speed_x = self.SPEED_X
+        elif key == 275:  # right
+            self.current_speed_x = -self.SPEED_X
         elif key == 13:  # enter
             self.on_menu_button_pressed()
         return True
