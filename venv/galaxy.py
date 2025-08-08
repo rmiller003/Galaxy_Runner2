@@ -65,6 +65,8 @@ class MainWidget(RelativeLayout):
     menu_title = StringProperty("G A L A X Y   R U N N E R ")
     menu_button_title = StringProperty("START")
     score_txt = StringProperty()
+    shield_txt = StringProperty()
+    shield_level = NumericProperty(3)
 
     sound_begin = None
     sound_begin = None
@@ -119,6 +121,8 @@ class MainWidget(RelativeLayout):
         self.obstacles_coordinates = []
         self.lasers = []
         self.explosions = []
+        self.shield_level = 3
+        self.shield_txt = "SHIELDS: " + str(self.shield_level)
         self.score_txt = "SCORE: " + str(self.current_y_loop)
         self.pre_fill_tiles_coordinates()
         self.generate_tiles_coordinates()
@@ -207,15 +211,6 @@ class MainWidget(RelativeLayout):
         for i in range(0, 3):
             px, py = self.ship_coordinates[i]
             if xmin <= px <= xmax and ymin <= py <= ymax:
-                return True
-        return False
-
-    def check_obstacle_collision(self):
-        for i in range(0, len(self.obstacles_coordinates)):
-            ti_x, ti_y = self.obstacles_coordinates[i]
-            if ti_y > self.current_y_loop + 1:
-                return False
-            if self.check_ship_collision_with_tile(ti_x, ti_y):
                 return True
         return False
 
@@ -426,8 +421,8 @@ class MainWidget(RelativeLayout):
                     # Add explosion
                     explosion = Rectangle(
                         source="images/explosion.jpg",
-                        pos=obstacle_widget.pos,
-                        size=obstacle_widget.size
+                        pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
+                        size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                     )
                     self.explosions.append(explosion)
                     self.canvas.add(explosion)
@@ -464,11 +459,25 @@ class MainWidget(RelativeLayout):
             self.current_offset_x += speed_x * time_factor
 
         if not self.state_game_over:
-            is_on_path = self.check_ship_collision()
-            collided_with_obstacle = self.check_obstacle_collision()
-            if not is_on_path or collided_with_obstacle:
+            if not self.check_ship_collision():
                 self.state_game_over = True
                 self.menu_title = "G  A  M  E    O  V  E  R"
+                self.menu_button_title = "RESTART"
+                self.menu_widget.opacity = 1
+                self.sound_music1.stop()
+                self.sound_gameover_impact.play()
+                Clock.schedule_once(self.play_game_over_voice_sound, 3)
+                print("GAME OVER")
+
+            for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
+                if self.check_ship_collision_with_tile(obstacle_coord[0], obstacle_coord[1]):
+                    self.shield_level -= 1
+                    self.shield_txt = "SHIELDS: " + str(self.shield_level)
+                    self.obstacles_coordinates.remove(obstacle_coord)
+                    self.obstacles[i].size = (0, 0)
+                    if self.shield_level == 0:
+                        self.state_game_over = True
+                        self.menu_title = "G  A  M  E    O  V  E  R"
                 self.menu_button_title = "RESTART"
                 self.menu_widget.opacity = 1
                 self.sound_music1.stop()
@@ -489,7 +498,7 @@ class MainWidget(RelativeLayout):
         if not self.state_game_over and self.state_game_has_started:
             self.sound_laser.play()
             with self.canvas:
-                Color(1, 1, 0)
+                Color(0, 0, 1)
                 x = self.ship.points[2]
                 y = self.ship.points[3]
                 laser = Line(points=[x, y, x, y + 10], width=2)
