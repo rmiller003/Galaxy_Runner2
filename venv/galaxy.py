@@ -460,14 +460,8 @@ class MainWidget(RelativeLayout):
 
         if not self.state_game_over:
             if not self.check_ship_collision():
-                self.state_game_over = True
-                self.menu_title = "G  A  M  E    O  V  E  R"
-                self.menu_button_title = "RESTART"
-                self.menu_widget.opacity = 1
-                self.sound_music1.stop()
-                self.sound_gameover_impact.play()
-                Clock.schedule_once(self.play_game_over_voice_sound, 3)
-                print("GAME OVER")
+                self.trigger_game_over()
+                return
 
             for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
                 if self.check_ship_collision_with_tile(obstacle_coord[0], obstacle_coord[1]):
@@ -476,18 +470,26 @@ class MainWidget(RelativeLayout):
                     self.obstacles_coordinates.remove(obstacle_coord)
                     self.obstacles[i].size = (0, 0)
                     if self.shield_level == 0:
-                        self.state_game_over = True
-                        self.menu_title = "G  A  M  E    O  V  E  R"
-                self.menu_button_title = "RESTART"
-                self.menu_widget.opacity = 1
-                self.sound_music1.stop()
-                self.sound_gameover_impact.play()
-                Clock.schedule_once(self.play_game_over_voice_sound, 3)
-                print("GAME OVER")
+                        self.trigger_game_over()
+                    else:
+                        # Play shield hit sound, which is the explosion sound for now
+                        if self.sound_explosion:
+                            self.sound_explosion.play()
+                    break # only handle one collision per frame
 
     def play_game_over_voice_sound(self, dt):
         if self.state_game_over:
             self.sound_gameover_voice.play()
+
+    def trigger_game_over(self):
+        self.state_game_over = True
+        self.menu_title = "G  A  M  E    O  V  E  R"
+        self.menu_button_title = "RESTART"
+        self.menu_widget.opacity = 1
+        self.sound_music1.stop()
+        self.sound_gameover_impact.play()
+        Clock.schedule_once(self.play_game_over_voice_sound, 3)
+        print("GAME OVER")
 
     def remove_explosion(self, explosion):
         if explosion in self.explosions:
