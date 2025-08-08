@@ -75,9 +75,8 @@ class MainWidget(RelativeLayout):
         self.init_ship()
         self.reset_game()
 
-        if self.is_desktop():
-            Window.bind(on_key_down=self._on_keyboard_down)
-            Window.bind(on_key_up=self._on_keyboard_up)
+        Window.bind(on_key_down=self._on_keyboard_down)
+        Window.bind(on_key_up=self._on_keyboard_up)
 
         Clock.schedule_interval(self.update, 1.0 / 60.0)
         self.sound_galaxy.play()
