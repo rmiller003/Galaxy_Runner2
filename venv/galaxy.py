@@ -12,7 +12,7 @@ from kivy import platform
 from kivy.core.window import Window
 from kivy.app import App
 from kivy.graphics.context_instructions import Color
-from kivy.graphics.vertex_instructions import Line, Quad, Triangle
+from kivy.graphics.vertex_instructions import Line, Quad, Triangle, Ellipse
 from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty
 from kivy.uix.widget import Widget
 
@@ -223,7 +223,7 @@ class MainWidget(RelativeLayout):
         with self.canvas:
             Color(1, 0, 0)
             for i in range(0, self.NB_OBSTACLES):
-                self.obstacles.append(Quad())
+                self.obstacles.append(Ellipse())
 
     def pre_fill_tiles_coordinates(self):
         for i in range(0, 15):
@@ -341,7 +341,20 @@ class MainWidget(RelativeLayout):
             x3, y3 = self.transform(xmax, ymax)
             x4, y4 = self.transform(xmax, ymin)
 
-            obstacle.points = [x1, y1, x2, y2, x3, y3, x4, y4]
+            # The quad is not a rectangle in perspective, so we approximate
+            # by taking the min/max of the transformed coordinates.
+            min_x = min(x1, x2, x3, x4)
+            max_x = max(x1, x2, x3, x4)
+            min_y = min(y1, y2, y3, y4)
+            max_y = max(y1, y2, y3, y4)
+
+            screen_width = max_x - min_x
+            screen_height = max_y - min_y
+
+            # Make the obstacle a circle with 50% of the smaller dimension of the tile
+            diameter = min(screen_width, screen_height) * 0.5
+            obstacle.size = (diameter, diameter)
+            obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
     def update_vertical_lines(self):
         start_index = -int(self.V_NB_LINES / 2) + 1
@@ -389,21 +402,22 @@ class MainWidget(RelativeLayout):
             laser_y = laser.points[3]
             for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
                 obstacle_widget = self.obstacles[i]
-                if not obstacle_widget.points: # already hit
+                if obstacle_widget.size == [0, 0]: # already hit
                     continue
 
-                min_x = min(obstacle_widget.points[0::2])
-                max_x = max(obstacle_widget.points[0::2])
-                min_y = min(obstacle_widget.points[1::2])
-                max_y = max(obstacle_widget.points[1::2])
+                min_x = obstacle_widget.pos[0]
+                max_x = obstacle_widget.pos[0] + obstacle_widget.size[0]
+                min_y = obstacle_widget.pos[1]
+                max_y = obstacle_widget.pos[1] + obstacle_widget.size[1]
 
                 if min_x < laser_x < max_x and min_y < laser_y < max_y:
                     # Collision
+                    self.sound_gameover_impact.play()
                     self.lasers.remove(laser)
                     self.canvas.remove(laser)
                     self.obstacles_coordinates.remove(obstacle_coord)
-                    # "Remove" obstacle by making it a point at origin
-                    obstacle_widget.points = [0,0,0,0,0,0,0,0]
+                    # "Remove" obstacle by making it size 0
+                    obstacle_widget.size = (0, 0)
                     break
 
     def update(self, dt):
