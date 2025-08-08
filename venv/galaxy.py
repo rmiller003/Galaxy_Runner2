@@ -76,9 +76,8 @@ class MainWidget(RelativeLayout):
         self.reset_game()
 
         if self.is_desktop():
-            self._keyboard = Window.request_keyboard(self.keyboard_closed, self)
-            self._keyboard.bind(on_key_down=self.on_keyboard_down)
-            self._keyboard.bind(on_key_up=self.on_keyboard_up)
+            Window.bind(on_key_down=self._on_keyboard_down)
+            Window.bind(on_key_up=self._on_keyboard_up)
 
         Clock.schedule_interval(self.update, 1.0 / 60.0)
         self.sound_galaxy.play()
@@ -114,21 +113,16 @@ class MainWidget(RelativeLayout):
             return True
         return False
 
-    def keyboard_closed(self):
-        self._keyboard.unbind(on_key_down=self.on_keyboard_down)
-        self._keyboard.unbind(on_key_up=self.on_keyboard_up)
-        self._keyboard = None
-
-    def on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        if keycode[1] == 'left':
+    def _on_keyboard_down(self, window, key, *args):
+        if key == 276:  # left
             self.current_speed_x = -self.SPEED_X
-        elif keycode[1] == 'right':
+        elif key == 275:  # right
             self.current_speed_x = self.SPEED_X
-        elif keycode[1] == 'enter':
+        elif key == 13:  # enter
             self.on_menu_button_pressed()
         return True
 
-    def on_keyboard_up(self, keyboard, keycode):
+    def _on_keyboard_up(self, window, key, *args):
         self.current_speed_x = 0
         return True
 
