@@ -532,9 +532,18 @@ class MainWidget(RelativeLayout):
                 if self.ship_invincible_time <= 0:
                     self.ship_invincible = False
 
-            if not self.check_ship_collision():
-                self.trigger_game_over()
-                return
+            if not self.check_ship_collision() and not self.ship_invincible:
+                self.lives -= 1
+                self.lives_txt = "LIVES: " + str(self.lives)
+                self.ship_invincible = True
+                self.ship_invincible_time = 1.5
+                self.current_offset_x = 0
+                if self.lives == 0:
+                    self.trigger_game_over()
+                    return
+                else:
+                    if self.sound_gameover_impact:
+                        self.sound_gameover_impact.play()
 
             for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
                 if self.check_ship_collision_with_tile(obstacle_coord[0], obstacle_coord[1]):
