@@ -140,8 +140,8 @@ class MainWidget(RelativeLayout):
 
         self.sound_music1.volume = 1
         self.sound_laser.volume = .25
-        self.sound_explosion.volume = .50
-        self.sound_shield.volume = .25
+        self.sound_explosion.volume = .75
+        self.sound_shield.volume = .75
         self.sound_begin.volume = .25
         self.sound_galaxy.volume = .25
         self.sound_gameover_voice.volume = .25
@@ -534,8 +534,6 @@ class MainWidget(RelativeLayout):
                 if distance < shield_diameter / 2:
                     laser_dict['velocity_y'] = -velocity # Reflect
                     laser_dict['color'].rgb = self.CYAN
-                    if self.sound_shield:
-                        self.sound_shield.play()
                     continue
 
             # Collision with obstacles (only for reflected lasers)
@@ -762,9 +760,9 @@ class MainWidget(RelativeLayout):
 
         if self.score >= self.last_power_up_score + 100:
             if self.last_power_up_score == 0:
-                # First power up at 200
-                if self.score >= 200:
-                    self.last_power_up_score = 200
+                # First power up at 100
+                if self.score >= 100:
+                    self.last_power_up_score = 100
                     self.activate_power_up()
             else:
                 self.last_power_up_score += 100
