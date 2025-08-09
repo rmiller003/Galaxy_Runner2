@@ -80,7 +80,7 @@ class MainWidget(RelativeLayout):
     lives = NumericProperty(4)
     shield_count_txt = StringProperty()
     shield_count = NumericProperty(3)
-    last_shield_award_score = NumericProperty(0)
+    last_life_award_score = NumericProperty(0)
 
     sound_begin = None
     sound_begin = None
@@ -148,9 +148,9 @@ class MainWidget(RelativeLayout):
         self.shield_count = 3
         self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
         self.score = 0
-        self.last_shield_award_score = 0
+        self.last_life_award_score = 0
         self.score_txt = "SCORE: " + str(self.score)
-        self.distance_txt = "DISTANCE: " + str(self.current_y_loop)
+        self.distance_txt = "DISTANCE: 0.0 KM"
         self.ship_invincible = False
         self.ship_invincible_time = 0
         self.pre_fill_tiles_coordinates()
@@ -519,7 +519,8 @@ class MainWidget(RelativeLayout):
             while self.current_offset_y >= spacing_y:
                 self.current_offset_y -= spacing_y
                 self.current_y_loop += 1
-                self.distance_txt = "DISTANCE: " + str(self.current_y_loop)
+                distance_in_km = self.current_y_loop / 100.0
+                self.distance_txt = f"DISTANCE: {distance_in_km:.2f} KM"
                 self.generate_tiles_coordinates()
                 print("loop : " + str(self.current_y_loop))
 
@@ -606,10 +607,10 @@ class MainWidget(RelativeLayout):
     def on_obstacle_destroyed(self):
         self.score += 25
         self.score_txt = "SCORE: " + str(self.score)
-        if self.score >= self.last_shield_award_score + 100:
-            self.last_shield_award_score += 100
-            self.shield_count += 3
-            self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
+        if self.score >= self.last_life_award_score + 120:
+            self.last_life_award_score += 120
+            self.lives += 1
+            self.lives_txt = "LIVES: " + str(self.lives)
 
     def remove_explosion(self, explosion):
         if explosion in self.explosions:
