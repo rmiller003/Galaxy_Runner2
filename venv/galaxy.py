@@ -21,6 +21,8 @@ from kivy.uix.widget import Widget
 
 Builder.load_file("menu.kv")
 
+POWER_UP_DURATION = 20.0
+
 
 from kivy.properties import BooleanProperty
 
@@ -57,6 +59,7 @@ class MainWidget(RelativeLayout):
 
     SPEED_LASER = 6.0
     lasers = []
+    bullets = []
 
     explosions = []
 
@@ -70,6 +73,7 @@ class MainWidget(RelativeLayout):
     shield_remaining_time = NumericProperty(0)
 
     power_up_active = BooleanProperty(False)
+    power_up_remaining_time = NumericProperty(0)
 
     SHIP_WIDTH = .1
     SHIP_HEIGHT = 0.035
@@ -92,6 +96,7 @@ class MainWidget(RelativeLayout):
     last_life_award_score = NumericProperty(0)
     last_distance_score_award = NumericProperty(0)
     last_power_up_score = NumericProperty(0)
+    time_since_last_shot = NumericProperty(0)
 
     sound_begin = None
     sound_galaxy = None
@@ -116,6 +121,12 @@ class MainWidget(RelativeLayout):
         self.shield_graphic = Line(width=2, dash_length=10, dash_offset=10)
         self.shield_instruction_group.add(Color(0, 0, 1, 0.5))
         self.shield_instruction_group.add(self.shield_graphic)
+
+        with self.canvas:
+            Color(0.5, 0.5, 0.5, 0.5)
+            self.power_up_timer_bar_bg = Rectangle(pos=(10, self.height - 30), size=(self.width - 20, 20))
+            Color(1, 0.5, 0, 0.8)
+            self.power_up_timer_bar = Rectangle(pos=(10, self.height - 30), size=(self.width - 20, 20))
 
         self.reset_game()
 
@@ -159,6 +170,7 @@ class MainWidget(RelativeLayout):
         self.tiles_coordinates = []
         self.obstacles_coordinates = []
         self.lasers = []
+        self.bullets = []
         self.explosions = []
         self.enemy_lasers = []
         for obstacle in self.obstacles:
@@ -171,6 +183,7 @@ class MainWidget(RelativeLayout):
         self.last_life_award_score = 0
         self.last_distance_score_award = 0
         self.last_power_up_score = 0
+        self.time_since_last_shot = 0
         self.score_txt = "SCORE: " + str(self.score)
         self.distance_txt = "DISTANCE: 0.0 KM"
         self.ship_invincible = False
@@ -508,6 +521,52 @@ class MainWidget(RelativeLayout):
 
                     break
 
+    def update_bullets(self):
+        for bullet in self.bullets[:]:
+            bullet.pos = (bullet.pos[0], bullet.pos[1] + self.SPEED_LASER)
+
+            if bullet.pos[1] > self.height:
+                self.bullets.remove(bullet)
+                self.canvas.remove(bullet)
+                continue
+
+            # Collision detection
+            bullet_x, bullet_y = bullet.pos
+            bullet_w, bullet_h = bullet.size
+            for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
+                obstacle_widget = self.obstacles[i]
+                if obstacle_widget.size == [0, 0]: # already hit
+                    continue
+
+                min_x = obstacle_widget.pos[0]
+                max_x = obstacle_widget.pos[0] + obstacle_widget.size[0]
+                min_y = obstacle_widget.pos[1]
+                max_y = obstacle_widget.pos[1] + obstacle_widget.size[1]
+
+                if min_x < bullet_x + bullet_w and bullet_x < max_x and min_y < bullet_y + bullet_h and bullet_y < max_y:
+                    # Collision
+                    self.sound_explosion.play()
+                    self.bullets.remove(bullet)
+                    self.canvas.remove(bullet)
+                    self.obstacles_coordinates.remove(obstacle_coord)
+                    self.on_obstacle_destroyed()
+
+                    # Add explosion
+                    explosion = Rectangle(
+                        source="images/explosion.jpg",
+                        pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
+                        size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                    )
+                    self.explosions.append(explosion)
+                    self.canvas.add(explosion)
+
+                    # "Remove" obstacle by making it size 0
+                    obstacle_widget.size = (0, 0)
+
+                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+
+                    break
+
     def update_enemy_lasers(self):
         for laser_dict in self.enemy_lasers[:]:
             laser = laser_dict['widget']
@@ -649,6 +708,7 @@ class MainWidget(RelativeLayout):
         self.update_tiles()
         self.update_obstacles()
         self.update_lasers()
+        self.update_bullets()
         self.update_enemy_lasers()
         self.update_ship()
         self.update_shield()
@@ -657,6 +717,24 @@ class MainWidget(RelativeLayout):
             self.shield_remaining_time -= dt
             if self.shield_remaining_time <= 0:
                 self.deactivate_shield()
+
+        if self.power_up_active:
+            self.power_up_remaining_time -= dt
+            self.time_since_last_shot += dt
+            if self.power_up_remaining_time <= 0:
+                self.deactivate_power_up()
+
+            if self.time_since_last_shot > 0.2:
+                self.fire_laser()
+                self.time_since_last_shot = 0
+
+            self.power_up_timer_bar_bg.size = (self.width - 20, 20)
+            self.power_up_timer_bar.size = ((self.width - 20) * (self.power_up_remaining_time / POWER_UP_DURATION), 20)
+            self.power_up_timer_bar_bg.pos = (10, self.height - 30)
+            self.power_up_timer_bar.pos = (10, self.height - 30)
+        else:
+            self.power_up_timer_bar_bg.size = (0, 0)
+            self.power_up_timer_bar.size = (0, 0)
 
         if not self.state_game_over and self.state_game_has_started:
             speed_y = self.SPEED * self.height / 100
@@ -779,12 +857,12 @@ class MainWidget(RelativeLayout):
 
     def activate_power_up(self):
         self.power_up_active = True
+        self.power_up_remaining_time = POWER_UP_DURATION
         self.ship_color.rgb = (1, 0.5, 0)
         if self.sound_orange:
             self.sound_orange.play()
-        Clock.schedule_once(self.deactivate_power_up, 20)
 
-    def deactivate_power_up(self, dt):
+    def deactivate_power_up(self):
         self.power_up_active = False
         self.ship_color.rgb = (0, 0, 1)
 
@@ -798,19 +876,20 @@ class MainWidget(RelativeLayout):
             if self.sound_laser:
                 self.sound_laser.play()
             with self.canvas:
-                Color(0, 0, 1)
                 if self.power_up_active:
-                    # Fire two lasers
+                    Color(1, 1, 0) # Yellow
+                    # Fire two bullets
                     x1 = self.ship.points[0]
                     y1 = self.ship.points[1]
-                    laser1 = Line(points=[x1, y1, x1, y1 + 10], width=2)
-                    self.lasers.append(laser1)
+                    bullet1 = Rectangle(pos=(x1, y1), size=(10, 20))
+                    self.bullets.append(bullet1)
 
                     x2 = self.ship.points[4]
                     y2 = self.ship.points[5]
-                    laser2 = Line(points=[x2, y2, x2, y2 + 10], width=2)
-                    self.lasers.append(laser2)
+                    bullet2 = Rectangle(pos=(x2, y2), size=(10, 20))
+                    self.bullets.append(bullet2)
                 else:
+                    Color(0, 0, 1) # Blue
                     # Fire one laser
                     x = self.ship.points[2]
                     y = self.ship.points[3]
