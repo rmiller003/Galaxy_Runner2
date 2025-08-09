@@ -21,7 +21,7 @@ from kivy.uix.widget import Widget
 
 Builder.load_file("menu.kv")
 
-POWER_UP_DURATION = 10.0
+POWER_UP_DURATION = 5.0
 
 
 from kivy.properties import BooleanProperty
@@ -121,7 +121,7 @@ class MainWidget(RelativeLayout):
         self.shield_instruction_group = InstructionGroup()
         # Inner grey circle
         self.shield_instruction_group.add(Color(0.5, 0.5, 0.5, 0.4))
-        self.inner_shield_graphic = Line(width=1.5)
+        self.inner_shield_graphic = Ellipse()
         self.shield_instruction_group.add(self.inner_shield_graphic)
         # Outer blue dotted circle
         self.shield_instruction_group.add(Color(0, 0, 1, 0.5))
@@ -681,7 +681,8 @@ class MainWidget(RelativeLayout):
             center_y = y_base + (y_nose - y_base) / 2
 
             radius = shield_diameter / 2
-            self.inner_shield_graphic.circle = (center_x, center_y, radius)
+            self.inner_shield_graphic.pos = (center_x - radius, center_y - radius)
+            self.inner_shield_graphic.size = (shield_diameter, shield_diameter)
             angle_end = 360 * (self.shield_remaining_time / 5.0)
             self.shield_graphic.circle = (center_x, center_y, radius, 0, angle_end)
 
@@ -849,25 +850,19 @@ class MainWidget(RelativeLayout):
     def add_score(self, points):
         self.score += points
         self.score_txt = "SCORE: " + str(self.score)
-        if self.score >= self.last_life_award_score + 75:
-            self.last_life_award_score += 75
+        if self.score >= self.last_life_award_score + 700:
+            self.last_life_award_score += 700
             self.lives += 1
             self.lives_txt = "LIVES: " + str(self.lives)
 
-        if self.score >= self.last_shield_award_score + 150:
-            self.last_shield_award_score += 150
+        if self.score >= self.last_shield_award_score + 500:
+            self.last_shield_award_score += 500
             self.shield_count += 1
             self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
 
-        if self.score >= self.last_power_up_score + 100:
-            if self.last_power_up_score == 0:
-                # First power up at 100
-                if self.score >= 100:
-                    self.last_power_up_score = 100
-                    self.activate_power_up()
-            else:
-                self.last_power_up_score += 100
-                self.activate_power_up()
+        if self.score >= self.last_power_up_score + 300:
+            self.last_power_up_score += 300
+            self.activate_power_up()
 
     def activate_power_up(self):
         self.power_up_active = True
