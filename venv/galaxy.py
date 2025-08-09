@@ -252,6 +252,8 @@ class MainWidget(RelativeLayout):
             self.fire_laser()
         elif key == 273: # up arrow
             self.activate_shield()
+        elif key == 112: # p
+            self.toggle_pause(None)
         return True
 
     def _on_keyboard_up(self, window, key, *args):
@@ -472,7 +474,7 @@ class MainWidget(RelativeLayout):
             screen_height = max_y - min_y
 
             # Make the obstacle a circle with 90% of the smaller dimension of the tile
-            diameter = min(screen_width, screen_height) * 0.5
+            diameter = min(screen_width, screen_height) * 0.9
             obstacle.size = (diameter, diameter)
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
@@ -483,7 +485,7 @@ class MainWidget(RelativeLayout):
                         line_instruction = instruction
                         break
                 if line_instruction:
-                    line_instruction.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.5)
+                    line_instruction.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.6)
 
 
             if self.state_game_has_started and random.random() < 0.01:
@@ -735,7 +737,7 @@ class MainWidget(RelativeLayout):
 
     def update_shield(self):
         if self.shield_active:
-            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5 * 0.8
+            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5 * 0.6
             center_x = self.ship.pos[0] + self.ship.size[0] / 2
             center_y = self.ship.pos[1] + self.ship.size[1] / 2
 
