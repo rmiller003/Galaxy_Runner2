@@ -79,6 +79,7 @@ class MainWidget(RelativeLayout):
     shield_count_txt = StringProperty()
     shield_count = NumericProperty(3)
     last_life_award_score = NumericProperty(0)
+    last_distance_score_award = NumericProperty(0)
 
     sound_begin = None
     sound_begin = None
@@ -141,12 +142,15 @@ class MainWidget(RelativeLayout):
         self.obstacles_coordinates = []
         self.lasers = []
         self.explosions = []
+        for obstacle in self.obstacles:
+            obstacle.size = (0, 0)
         self.lives = 4
         self.lives_txt = "LIVES: " + str(self.lives)
         self.shield_count = 3
         self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
         self.score = 0
         self.last_life_award_score = 0
+        self.last_distance_score_award = 0
         self.score_txt = "SCORE: " + str(self.score)
         self.distance_txt = "DISTANCE: 0.0 KM"
         self.ship_invincible = False
@@ -519,6 +523,12 @@ class MainWidget(RelativeLayout):
                 self.current_y_loop += 1
                 distance_in_km = self.current_y_loop / 100.0
                 self.distance_txt = f"DISTANCE: {distance_in_km:.2f} KM"
+
+                if self.current_y_loop >= self.last_distance_score_award + 1000:
+                    self.last_distance_score_award += 1000
+                    self.score += 5
+                    self.score_txt = "SCORE: " + str(self.score)
+
                 self.generate_tiles_coordinates()
                 print("loop : " + str(self.current_y_loop))
 
