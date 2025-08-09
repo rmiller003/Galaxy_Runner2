@@ -538,6 +538,20 @@ class MainWidget(RelativeLayout):
                 self.ship_invincible = True
                 self.ship_invincible_time = 1.5
                 self.current_offset_x = 0
+
+                # Add explosion on ship
+                ship_center_x = self.ship.points[2]
+                ship_center_y = (self.ship.points[1] + self.ship.points[3]) / 2
+                explosion_size = self.width * self.SHIP_WIDTH * 1.5
+                explosion = Rectangle(
+                    source="images/explosion.jpg",
+                    pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
+                    size=(explosion_size, explosion_size)
+                )
+                self.explosions.append(explosion)
+                self.canvas.add(explosion)
+                Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+
                 if self.lives == 0:
                     self.trigger_game_over()
                     return
@@ -552,6 +566,20 @@ class MainWidget(RelativeLayout):
                         self.lives_txt = "LIVES: " + str(self.lives)
                         self.ship_invincible = True
                         self.ship_invincible_time = 1.5
+
+                        # Add explosion on ship
+                        ship_center_x = self.ship.points[2]
+                        ship_center_y = (self.ship.points[1] + self.ship.points[3]) / 2
+                        explosion_size = self.width * self.SHIP_WIDTH * 1.5
+                        explosion = Rectangle(
+                            source="images/explosion.jpg",
+                            pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
+                            size=(explosion_size, explosion_size)
+                        )
+                        self.explosions.append(explosion)
+                        self.canvas.add(explosion)
+                        Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+
                         if self.lives == 0:
                             self.trigger_game_over()
                         else:
