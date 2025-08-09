@@ -63,7 +63,6 @@ class MainWidget(RelativeLayout):
     ship_invincible_time = NumericProperty(0)
 
     power_up_active = BooleanProperty(False)
-    power_up_achieved = BooleanProperty(False)
 
     SHIP_WIDTH = .1
     SHIP_HEIGHT = 0.035
@@ -85,6 +84,7 @@ class MainWidget(RelativeLayout):
     shield_count = NumericProperty(3)
     last_life_award_score = NumericProperty(0)
     last_distance_score_award = NumericProperty(0)
+    last_power_up_score = NumericProperty(0)
 
     sound_begin = None
     sound_begin = None
@@ -157,6 +157,7 @@ class MainWidget(RelativeLayout):
         self.score = 0
         self.last_life_award_score = 0
         self.last_distance_score_award = 0
+        self.last_power_up_score = 0
         self.score_txt = "SCORE: " + str(self.score)
         self.distance_txt = "DISTANCE: 0.0 KM"
         self.ship_invincible = False
@@ -403,8 +404,8 @@ class MainWidget(RelativeLayout):
                     Color(1, 0, 1) # Magenta
                     x = obstacle.pos[0] + obstacle.size[0] / 2
                     y = obstacle.pos[1]
-                    laser = Line(points=[x, y, x, y - 10], width=2)
-                    self.enemy_lasers.append(laser)
+                    laser_widget = Line(points=[x, y, x, y - 10], width=2)
+                    self.enemy_lasers.append({'widget': laser_widget, 'velocity_y': -self.SPEED_LASER})
 
     def update_vertical_lines(self):
         start_index = -int(self.V_NB_LINES / 2) + 1
@@ -485,19 +486,38 @@ class MainWidget(RelativeLayout):
                     break
 
     def update_enemy_lasers(self):
-        for laser in self.enemy_lasers[:]:
+        for laser_dict in self.enemy_lasers[:]:
+            laser = laser_dict['widget']
+            velocity = laser_dict['velocity_y']
+
             points = laser.points
-            points[1] -= self.SPEED_LASER
-            points[3] -= self.SPEED_LASER
+            points[1] += velocity
+            points[3] += velocity
             laser.points = points
 
             if laser.points[1] < 0:
-                self.enemy_lasers.remove(laser)
+                self.enemy_lasers.remove(laser_dict)
                 self.canvas.remove(laser)
                 continue
 
+            # Collision with player shield
+            if self.shield_active:
+                shield_diameter = self.width * self.SHIP_WIDTH * 1.2
+                shield_center_x = self.shield_graphic.pos[0] + shield_diameter / 2
+                shield_center_y = self.shield_graphic.pos[1] + shield_diameter / 2
+                laser_x = laser.points[0]
+                laser_y = laser.points[1]
+                distance = ((laser_x - shield_center_x)**2 + (laser_y - shield_center_y)**2)**0.5
+                if distance < shield_diameter / 2:
+                    # Laser hits the shield, destroy the laser
+                    self.enemy_lasers.remove(laser_dict)
+                    self.canvas.remove(laser)
+                    if self.sound_shield:
+                        self.sound_shield.play()
+                    continue # Check next laser
+
             # Collision with player
-            if not self.ship_invincible and not self.shield_active:
+            if not self.ship_invincible:
                 ship_min_x = self.ship.points[0]
                 ship_max_x = self.ship.points[4]
                 ship_min_y = self.ship.points[1]
@@ -506,12 +526,26 @@ class MainWidget(RelativeLayout):
                 laser_y = laser.points[1]
 
                 if ship_min_x < laser_x < ship_max_x and ship_min_y < laser_y < ship_max_y:
-                    self.enemy_lasers.remove(laser)
+                    self.enemy_lasers.remove(laser_dict)
                     self.canvas.remove(laser)
                     self.lives -= 1
                     self.lives_txt = "LIVES: " + str(self.lives)
                     self.ship_invincible = True
                     self.ship_invincible_time = 1.5
+
+                    # Add explosion on ship
+                    ship_center_x = self.ship.points[2]
+                    ship_center_y = (self.ship.points[1] + self.ship.points[3]) / 2
+                    explosion_size = self.width * self.SHIP_WIDTH * 1.5
+                    explosion = Rectangle(
+                        source="images/explosion.jpg",
+                        pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
+                        size=(explosion_size, explosion_size)
+                    )
+                    self.explosions.append(explosion)
+                    self.canvas.add(explosion)
+                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+
                     if self.lives == 0:
                         self.trigger_game_over()
                     else:
@@ -578,12 +612,7 @@ class MainWidget(RelativeLayout):
 
                 if self.current_y_loop >= self.last_distance_score_award + 10:
                     self.last_distance_score_award += 10
-                    self.score += 5
-                    self.score_txt = "SCORE: " + str(self.score)
-                    if self.score >= 200 and not self.power_up_achieved:
-                        self.power_up_active = True
-                        self.power_up_achieved = True
-                        self.ship_color.rgb = (1, 0.5, 0)
+                    self.add_score(5)
 
                 self.generate_tiles_coordinates()
                 print("loop : " + str(self.current_y_loop))
@@ -669,16 +698,34 @@ class MainWidget(RelativeLayout):
         print("GAME OVER")
 
     def on_obstacle_destroyed(self):
-        self.score += 25
+        self.add_score(25)
+
+    def add_score(self, points):
+        self.score += points
         self.score_txt = "SCORE: " + str(self.score)
-        if self.score >= self.last_life_award_score + 120:
-            self.last_life_award_score += 120
+        if self.score >= self.last_life_award_score + 75:
+            self.last_life_award_score += 75
             self.lives += 1
             self.lives_txt = "LIVES: " + str(self.lives)
-        if self.score >= 200 and not self.power_up_achieved:
-            self.power_up_active = True
-            self.power_up_achieved = True
-            self.ship_color.rgb = (1, 0.5, 0)
+
+        if self.score >= self.last_power_up_score + 100:
+            if self.last_power_up_score == 0:
+                # First power up at 200
+                if self.score >= 200:
+                    self.last_power_up_score = 200
+                    self.activate_power_up()
+            else:
+                self.last_power_up_score += 100
+                self.activate_power_up()
+
+    def activate_power_up(self):
+        self.power_up_active = True
+        self.ship_color.rgb = (1, 0.5, 0)
+        Clock.schedule_once(self.deactivate_power_up, 20)
+
+    def deactivate_power_up(self, dt):
+        self.power_up_active = False
+        self.ship_color.rgb = (0, 0, 1)
 
     def remove_explosion(self, explosion):
         if explosion in self.explosions:
