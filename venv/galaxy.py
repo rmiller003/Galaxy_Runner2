@@ -730,7 +730,7 @@ class MainWidget(RelativeLayout):
 
     def update_shield(self):
         if self.shield_active:
-            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5
+            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5 * 0.8
             center_x = self.ship.pos[0] + self.ship.size[0] / 2
             center_y = self.ship.pos[1] + self.ship.size[1] / 2
 
