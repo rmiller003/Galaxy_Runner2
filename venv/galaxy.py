@@ -497,13 +497,14 @@ class MainWidget(RelativeLayout):
             points[3] += velocity
             laser.points = points
 
-            if laser.points[1] < 0:
+            # Off-screen check
+            if laser.points[1] < 0 or laser.points[1] > self.height:
                 self.enemy_lasers.remove(laser_dict)
                 self.canvas.remove(laser)
                 continue
 
             # Collision with player shield
-            if self.shield_active:
+            if self.shield_active and velocity < 0:
                 shield_diameter = self.width * self.SHIP_WIDTH * 1.2
                 shield_center_x = self.shield_graphic.pos[0] + shield_diameter / 2
                 shield_center_y = self.shield_graphic.pos[1] + shield_diameter / 2
@@ -511,15 +512,43 @@ class MainWidget(RelativeLayout):
                 laser_y = laser.points[1]
                 distance = ((laser_x - shield_center_x)**2 + (laser_y - shield_center_y)**2)**0.5
                 if distance < shield_diameter / 2:
-                    # Laser hits the shield, destroy the laser
-                    self.enemy_lasers.remove(laser_dict)
-                    self.canvas.remove(laser)
+                    laser_dict['velocity_y'] = -velocity # Reflect
                     if self.sound_shield:
                         self.sound_shield.play()
-                    continue # Check next laser
+                    continue
 
-            # Collision with player
-            if not self.ship_invincible:
+            # Collision with obstacles (only for reflected lasers)
+            if velocity > 0:
+                laser_x = laser.points[0]
+                laser_y = laser.points[3]
+                for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
+                    obstacle_widget = self.obstacles[i]
+                    if obstacle_widget.size == [0, 0]:
+                        continue
+                    min_x = obstacle_widget.pos[0]
+                    max_x = obstacle_widget.pos[0] + obstacle_widget.size[0]
+                    min_y = obstacle_widget.pos[1]
+                    max_y = obstacle_widget.pos[1] + obstacle_widget.size[1]
+                    if min_x < laser_x < max_x and min_y < laser_y < max_y:
+                        self.enemy_lasers.remove(laser_dict)
+                        self.canvas.remove(laser)
+                        self.obstacles_coordinates.remove(obstacle_coord)
+                        self.on_obstacle_destroyed()
+
+                        # Add explosion
+                        explosion = Rectangle(
+                            source="images/explosion.jpg",
+                            pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
+                            size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                        )
+                        self.explosions.append(explosion)
+                        self.canvas.add(explosion)
+                        obstacle_widget.size = (0, 0)
+                        Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+                        break
+
+            # Collision with player (only for incoming lasers)
+            if velocity < 0 and not self.ship_invincible:
                 ship_min_x = self.ship.points[0]
                 ship_max_x = self.ship.points[4]
                 ship_min_y = self.ship.points[1]
@@ -628,7 +657,7 @@ class MainWidget(RelativeLayout):
                 if self.ship_invincible_time <= 0:
                     self.ship_invincible = False
 
-            if not self.check_ship_collision() and not self.ship_invincible:
+            if not self.check_ship_collision() and not self.ship_invincible and not self.shield_active:
                 self.lives -= 1
                 self.lives_txt = "LIVES: " + str(self.lives)
                 self.ship_invincible = True
