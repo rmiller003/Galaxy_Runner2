@@ -589,10 +589,8 @@ class MainWidget(RelativeLayout):
 
             # Off-screen check
             if laser.points[1] < 0 or laser.points[1] > self.height:
-                self.canvas.remove(laser_dict['color'])
-                self.canvas.remove(laser_dict['widget'])
-                self.canvas.remove(laser_dict['group'])
                 self.enemy_lasers.remove(laser_dict)
+                self.canvas.remove(laser_dict['group'])
                 continue
 
             # Collision with player shield
