@@ -21,7 +21,7 @@ from kivy.uix.widget import Widget
 
 Builder.load_file("menu.kv")
 
-POWER_UP_DURATION = 20.0
+POWER_UP_DURATION = 10.0
 
 
 from kivy.properties import BooleanProperty
@@ -96,6 +96,7 @@ class MainWidget(RelativeLayout):
     last_life_award_score = NumericProperty(0)
     last_distance_score_award = NumericProperty(0)
     last_power_up_score = NumericProperty(0)
+    last_shield_award_score = NumericProperty(0)
     time_since_last_shot = NumericProperty(0)
 
     sound_begin = None
@@ -118,8 +119,13 @@ class MainWidget(RelativeLayout):
         self.init_ship()
 
         self.shield_instruction_group = InstructionGroup()
-        self.shield_graphic = Line(width=2, dash_length=10, dash_offset=10)
+        # Inner grey circle
+        self.shield_instruction_group.add(Color(0.5, 0.5, 0.5, 0.4))
+        self.inner_shield_graphic = Line(width=1.5)
+        self.shield_instruction_group.add(self.inner_shield_graphic)
+        # Outer blue dotted circle
         self.shield_instruction_group.add(Color(0, 0, 1, 0.5))
+        self.shield_graphic = Line(width=2, dash_length=10, dash_offset=10)
         self.shield_instruction_group.add(self.shield_graphic)
 
         with self.canvas:
@@ -183,6 +189,7 @@ class MainWidget(RelativeLayout):
         self.last_life_award_score = 0
         self.last_distance_score_award = 0
         self.last_power_up_score = 0
+        self.last_shield_award_score = 0
         self.time_since_last_shot = 0
         self.score_txt = "SCORE: " + str(self.score)
         self.distance_txt = "DISTANCE: 0.0 KM"
@@ -673,8 +680,10 @@ class MainWidget(RelativeLayout):
             y_base = self.ship.points[1]
             center_y = y_base + (y_nose - y_base) / 2
 
+            radius = shield_diameter / 2
+            self.inner_shield_graphic.circle = (center_x, center_y, radius)
             angle_end = 360 * (self.shield_remaining_time / 5.0)
-            self.shield_graphic.circle = (center_x, center_y, shield_diameter / 2, 0, angle_end)
+            self.shield_graphic.circle = (center_x, center_y, radius, 0, angle_end)
 
             for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
                 obstacle_widget = self.obstacles[i]
@@ -845,6 +854,11 @@ class MainWidget(RelativeLayout):
             self.lives += 1
             self.lives_txt = "LIVES: " + str(self.lives)
 
+        if self.score >= self.last_shield_award_score + 150:
+            self.last_shield_award_score += 150
+            self.shield_count += 1
+            self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
+
         if self.score >= self.last_power_up_score + 100:
             if self.last_power_up_score == 0:
                 # First power up at 100
@@ -881,12 +895,15 @@ class MainWidget(RelativeLayout):
                     # Fire two bullets
                     x1 = self.ship.points[0]
                     y1 = self.ship.points[1]
-                    bullet1 = Rectangle(pos=(x1, y1), size=(10, 20))
-                    self.bullets.append(bullet1)
-
                     x2 = self.ship.points[4]
                     y2 = self.ship.points[5]
-                    bullet2 = Rectangle(pos=(x2, y2), size=(10, 20))
+
+                    # Move the bullets closer to the center
+                    margin = (x2 - x1) * 0.25
+                    bullet1 = Rectangle(pos=(x1 + margin, y1), size=(10, 20))
+                    self.bullets.append(bullet1)
+
+                    bullet2 = Rectangle(pos=(x2 - margin, y2), size=(10, 20))
                     self.bullets.append(bullet2)
                 else:
                     Color(0, 0, 1) # Blue
