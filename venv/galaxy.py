@@ -54,11 +54,16 @@ class MainWidget(RelativeLayout):
 
     explosions = []
 
+    enemy_lasers = []
+
     shield_active = BooleanProperty(False)
     shield_instruction_group = None
 
     ship_invincible = BooleanProperty(False)
     ship_invincible_time = NumericProperty(0)
+
+    power_up_active = BooleanProperty(False)
+    power_up_achieved = BooleanProperty(False)
 
     SHIP_WIDTH = .1
     SHIP_HEIGHT = 0.035
@@ -142,6 +147,7 @@ class MainWidget(RelativeLayout):
         self.obstacles_coordinates = []
         self.lasers = []
         self.explosions = []
+        self.enemy_lasers = []
         for obstacle in self.obstacles:
             obstacle.size = (0, 0)
         self.lives = 4
@@ -155,6 +161,8 @@ class MainWidget(RelativeLayout):
         self.distance_txt = "DISTANCE: 0.0 KM"
         self.ship_invincible = False
         self.ship_invincible_time = 0
+        self.power_up_active = False
+        self.power_up_achieved = False
         self.pre_fill_tiles_coordinates()
         self.generate_tiles_coordinates()
         self.state_game_over = False
@@ -210,7 +218,7 @@ class MainWidget(RelativeLayout):
 
     def init_ship(self):
         with self.canvas:
-            Color(0, 0, 2)
+            self.ship_color = Color(0, 0, 1)
             self.ship = Triangle()
 
     def update_ship(self):
@@ -390,6 +398,14 @@ class MainWidget(RelativeLayout):
             obstacle.size = (diameter, diameter)
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
+            if random.random() < 0.01:
+                with self.canvas:
+                    Color(1, 0, 1) # Magenta
+                    x = obstacle.pos[0] + obstacle.size[0] / 2
+                    y = obstacle.pos[1]
+                    laser = Line(points=[x, y, x, y - 10], width=2)
+                    self.enemy_lasers.append(laser)
+
     def update_vertical_lines(self):
         start_index = -int(self.V_NB_LINES / 2) + 1
         for i in range(start_index, start_index + self.V_NB_LINES):
@@ -468,6 +484,41 @@ class MainWidget(RelativeLayout):
 
                     break
 
+    def update_enemy_lasers(self):
+        for laser in self.enemy_lasers[:]:
+            points = laser.points
+            points[1] -= self.SPEED_LASER
+            points[3] -= self.SPEED_LASER
+            laser.points = points
+
+            if laser.points[1] < 0:
+                self.enemy_lasers.remove(laser)
+                self.canvas.remove(laser)
+                continue
+
+            # Collision with player
+            if not self.ship_invincible and not self.shield_active:
+                ship_min_x = self.ship.points[0]
+                ship_max_x = self.ship.points[4]
+                ship_min_y = self.ship.points[1]
+                ship_max_y = self.ship.points[3]
+                laser_x = laser.points[0]
+                laser_y = laser.points[1]
+
+                if ship_min_x < laser_x < ship_max_x and ship_min_y < laser_y < ship_max_y:
+                    self.enemy_lasers.remove(laser)
+                    self.canvas.remove(laser)
+                    self.lives -= 1
+                    self.lives_txt = "LIVES: " + str(self.lives)
+                    self.ship_invincible = True
+                    self.ship_invincible_time = 1.5
+                    if self.lives == 0:
+                        self.trigger_game_over()
+                    else:
+                        if self.sound_explosion:
+                            self.sound_explosion.play()
+                    break
+
     def update_shield(self):
         if self.shield_active:
             shield_diameter = self.width * self.SHIP_WIDTH * 1.2
@@ -510,6 +561,7 @@ class MainWidget(RelativeLayout):
         self.update_tiles()
         self.update_obstacles()
         self.update_lasers()
+        self.update_enemy_lasers()
         self.update_ship()
         self.update_shield()
 
@@ -524,10 +576,14 @@ class MainWidget(RelativeLayout):
                 distance_in_km = self.current_y_loop / 100.0
                 self.distance_txt = f"DISTANCE: {distance_in_km:.2f} KM"
 
-                if self.current_y_loop >= self.last_distance_score_award + 1000:
-                    self.last_distance_score_award += 1000
+                if self.current_y_loop >= self.last_distance_score_award + 10:
+                    self.last_distance_score_award += 10
                     self.score += 5
                     self.score_txt = "SCORE: " + str(self.score)
+                    if self.score >= 200 and not self.power_up_achieved:
+                        self.power_up_active = True
+                        self.power_up_achieved = True
+                        self.ship_color.rgb = (1, 0.5, 0)
 
                 self.generate_tiles_coordinates()
                 print("loop : " + str(self.current_y_loop))
@@ -619,6 +675,10 @@ class MainWidget(RelativeLayout):
             self.last_life_award_score += 120
             self.lives += 1
             self.lives_txt = "LIVES: " + str(self.lives)
+        if self.score >= 200 and not self.power_up_achieved:
+            self.power_up_active = True
+            self.power_up_achieved = True
+            self.ship_color.rgb = (1, 0.5, 0)
 
     def remove_explosion(self, explosion):
         if explosion in self.explosions:
@@ -627,13 +687,27 @@ class MainWidget(RelativeLayout):
 
     def fire_laser(self):
         if not self.state_game_over and self.state_game_has_started:
-            self.sound_laser.play()
+            if self.sound_laser:
+                self.sound_laser.play()
             with self.canvas:
                 Color(0, 0, 1)
-                x = self.ship.points[2]
-                y = self.ship.points[3]
-                laser = Line(points=[x, y, x, y + 10], width=2)
-                self.lasers.append(laser)
+                if self.power_up_active:
+                    # Fire two lasers
+                    x1 = self.ship.points[0]
+                    y1 = self.ship.points[1]
+                    laser1 = Line(points=[x1, y1, x1, y1 + 10], width=2)
+                    self.lasers.append(laser1)
+
+                    x2 = self.ship.points[4]
+                    y2 = self.ship.points[5]
+                    laser2 = Line(points=[x2, y2, x2, y2 + 10], width=2)
+                    self.lasers.append(laser2)
+                else:
+                    # Fire one laser
+                    x = self.ship.points[2]
+                    y = self.ship.points[3]
+                    laser = Line(points=[x, y, x, y + 10], width=2)
+                    self.lasers.append(laser)
 
     def activate_shield(self):
         if not self.shield_active and not self.state_game_over and self.shield_count > 0:
