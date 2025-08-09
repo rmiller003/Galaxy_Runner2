@@ -75,8 +75,8 @@ class MainWidget(RelativeLayout):
     power_up_active = BooleanProperty(False)
     power_up_remaining_time = NumericProperty(0)
 
-    SHIP_WIDTH = .1
-    SHIP_HEIGHT = 0.035
+    SHIP_WIDTH = .15
+    SHIP_HEIGHT = 0.05
     SHIP_BASE_Y = 0.04
     ship = None
     ship_coordinates = [(0, 0), (0, 0), (0, 0)]
@@ -798,7 +798,7 @@ class MainWidget(RelativeLayout):
 
             for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
                 if self.check_ship_collision_with_tile(obstacle_coord[0], obstacle_coord[1]):
-                    if not self.ship_invincible:
+                    if not self.ship_invincible and not self.shield_active:
                         self.lives -= 1
                         self.lives_txt = "LIVES: " + str(self.lives)
                         self.ship_invincible = True
