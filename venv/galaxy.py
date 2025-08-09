@@ -75,8 +75,8 @@ class MainWidget(RelativeLayout):
     power_up_active = BooleanProperty(False)
     power_up_remaining_time = NumericProperty(0)
 
-    SHIP_WIDTH = .15
-    SHIP_HEIGHT = 0.05
+    SHIP_WIDTH = .1
+    SHIP_HEIGHT = 0.035
     SHIP_BASE_Y = 0.04
     ship = None
     ship_coordinates = [(0, 0), (0, 0), (0, 0)]
@@ -851,9 +851,9 @@ class MainWidget(RelativeLayout):
             self.lives += 1
             self.lives_txt = "LIVES: " + str(self.lives)
 
-        if self.score >= self.last_shield_award_score + 500:
-            self.last_shield_award_score += 500
-            self.shield_count += 1
+        if self.score >= self.last_shield_award_score + 150:
+            self.last_shield_award_score += 150
+            self.shield_count += 3
             self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
 
         if self.score >= self.last_power_up_score + 300:
