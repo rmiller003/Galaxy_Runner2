@@ -21,7 +21,7 @@ from kivy.uix.widget import Widget
 
 Builder.load_file("menu.kv")
 
-POWER_UP_DURATION = 5.0
+POWER_UP_DURATION = 7.0
 
 
 from kivy.properties import BooleanProperty
@@ -169,7 +169,7 @@ class MainWidget(RelativeLayout):
         self.sound_gameover_impact.volume = .6
         self.sound_orange.volume = .25
         self.sound_laser_zap.volume = .25
-        self.sound_powerup.volume = .25
+        self.sound_powerup.volume = 1.0
 
     def reset_game(self):
         self.current_offset_y = 0
@@ -297,9 +297,8 @@ class MainWidget(RelativeLayout):
 
     def init_obstacles(self):
         with self.canvas:
-            Color(1, 0, 0)
             for i in range(0, self.NB_OBSTACLES):
-                self.obstacles.append(Ellipse())
+                self.obstacles.append(Rectangle(source="images/Tie Fighter.png"))
 
     def pre_fill_tiles_coordinates(self):
         for i in range(0, 15):
