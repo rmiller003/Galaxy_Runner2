@@ -16,14 +16,18 @@ from kivy.app import App
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line, Quad, Triangle, Ellipse, Rectangle
 from kivy.graphics import InstructionGroup
-from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty
+from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty, BooleanProperty
 from kivy.uix.widget import Widget
 
 Builder.load_file("menu.kv")
 
 
+from kivy.properties import BooleanProperty
+
+
 class MainWidget(RelativeLayout):
     menu_widget = ObjectProperty()
+    CYAN = (0, 1, 1)
     perspective_point_x = NumericProperty(0)
     perspective_point_y = NumericProperty(0)
 
@@ -402,12 +406,20 @@ class MainWidget(RelativeLayout):
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
             if random.random() < 0.01:
-                with self.canvas:
-                    Color(1, 0, 1) # Magenta
-                    x = obstacle.pos[0] + obstacle.size[0] / 2
-                    y = obstacle.pos[1]
-                    laser_widget = Line(points=[x, y, x, y - 10], width=2)
-                    self.enemy_lasers.append({'widget': laser_widget, 'velocity_y': -self.SPEED_LASER})
+                laser_group = InstructionGroup()
+                laser_color = Color(1, 0, 1) # Magenta
+                x = obstacle.pos[0] + obstacle.size[0] / 2
+                y = obstacle.pos[1]
+                laser_widget = Line(points=[x, y, x, y - 10], width=2)
+                laser_group.add(laser_color)
+                laser_group.add(laser_widget)
+                self.canvas.add(laser_group)
+                self.enemy_lasers.append({
+                    'group': laser_group,
+                    'widget': laser_widget,
+                    'color': laser_color,
+                    'velocity_y': -self.SPEED_LASER
+                })
 
     def update_vertical_lines(self):
         start_index = -int(self.V_NB_LINES / 2) + 1
@@ -500,7 +512,7 @@ class MainWidget(RelativeLayout):
             # Off-screen check
             if laser.points[1] < 0 or laser.points[1] > self.height:
                 self.enemy_lasers.remove(laser_dict)
-                self.canvas.remove(laser)
+                self.canvas.remove(laser_dict['group'])
                 continue
 
             # Collision with player shield
@@ -513,6 +525,7 @@ class MainWidget(RelativeLayout):
                 distance = ((laser_x - shield_center_x)**2 + (laser_y - shield_center_y)**2)**0.5
                 if distance < shield_diameter / 2:
                     laser_dict['velocity_y'] = -velocity # Reflect
+                    laser_dict['color'].rgb = self.CYAN
                     if self.sound_shield:
                         self.sound_shield.play()
                     continue
@@ -531,7 +544,7 @@ class MainWidget(RelativeLayout):
                     max_y = obstacle_widget.pos[1] + obstacle_widget.size[1]
                     if min_x < laser_x < max_x and min_y < laser_y < max_y:
                         self.enemy_lasers.remove(laser_dict)
-                        self.canvas.remove(laser)
+                        self.canvas.remove(laser_dict['group'])
                         self.obstacles_coordinates.remove(obstacle_coord)
                         self.on_obstacle_destroyed()
 
@@ -558,7 +571,7 @@ class MainWidget(RelativeLayout):
 
                 if ship_min_x < laser_x < ship_max_x and ship_min_y < laser_y < ship_max_y:
                     self.enemy_lasers.remove(laser_dict)
-                    self.canvas.remove(laser)
+                    self.canvas.remove(laser_dict['group'])
                     self.lives -= 1
                     self.lives_txt = "LIVES: " + str(self.lives)
                     self.ship_invincible = True
