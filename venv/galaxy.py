@@ -527,11 +527,13 @@ class MainWidget(RelativeLayout):
             # Collision with player shield
             if self.shield_active and velocity < 0:
                 shield_diameter = self.width * self.SHIP_WIDTH * 1.2
-                shield_center_x = self.shield_graphic.pos[0] + shield_diameter / 2
-                shield_center_y = self.shield_graphic.pos[1] + shield_diameter / 2
+                center_x = self.ship.points[2]
+                y_nose = self.ship.points[3]
+                y_base = self.ship.points[1]
+                center_y = y_base + (y_nose - y_base) / 2
                 laser_x = laser.points[0]
                 laser_y = laser.points[1]
-                distance = ((laser_x - shield_center_x)**2 + (laser_y - shield_center_y)**2)**0.5
+                distance = ((laser_x - center_x)**2 + (laser_y - center_y)**2)**0.5
                 if distance < shield_diameter / 2:
                     laser_dict['velocity_y'] = -velocity # Reflect
                     laser_dict['color'].rgb = self.CYAN
