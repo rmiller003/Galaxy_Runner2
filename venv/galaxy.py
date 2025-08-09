@@ -57,6 +57,9 @@ class MainWidget(RelativeLayout):
     shield_active = BooleanProperty(False)
     shield_instruction_group = None
 
+    ship_invincible = BooleanProperty(False)
+    ship_invincible_time = NumericProperty(0)
+
     SHIP_WIDTH = .1
     SHIP_HEIGHT = 0.035
     SHIP_BASE_Y = 0.04
@@ -68,10 +71,14 @@ class MainWidget(RelativeLayout):
 
     menu_title = StringProperty("G A L A X Y   R U N N E R ")
     menu_button_title = StringProperty("START")
+    distance_txt = StringProperty()
     score_txt = StringProperty()
-    shield_txt = StringProperty()
-    shield_level = NumericProperty(4)
-    last_life_award_score = NumericProperty(0)
+    score = NumericProperty(0)
+    lives_txt = StringProperty()
+    lives = NumericProperty(4)
+    shield_count_txt = StringProperty()
+    shield_count = NumericProperty(3)
+    last_shield_award_score = NumericProperty(0)
 
     sound_begin = None
     sound_begin = None
@@ -134,10 +141,16 @@ class MainWidget(RelativeLayout):
         self.obstacles_coordinates = []
         self.lasers = []
         self.explosions = []
-        self.shield_level = 4
-        self.last_life_award_score = 0
-        self.shield_txt = "LIVES: " + str(self.shield_level)
-        self.score_txt = "SCORE: " + str(self.current_y_loop)
+        self.lives = 4
+        self.lives_txt = "LIVES: " + str(self.lives)
+        self.shield_count = 3
+        self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
+        self.score = 0
+        self.last_shield_award_score = 0
+        self.score_txt = "SCORE: " + str(self.score)
+        self.distance_txt = "DISTANCE: " + str(self.current_y_loop)
+        self.ship_invincible = False
+        self.ship_invincible_time = 0
         self.pre_fill_tiles_coordinates()
         self.generate_tiles_coordinates()
         self.state_game_over = False
@@ -433,6 +446,7 @@ class MainWidget(RelativeLayout):
                     self.lasers.remove(laser)
                     self.canvas.remove(laser)
                     self.obstacles_coordinates.remove(obstacle_coord)
+                    self.on_obstacle_destroyed()
 
                     # Add explosion
                     explosion = Rectangle(
@@ -469,6 +483,7 @@ class MainWidget(RelativeLayout):
                 distance = (dx**2 + dy**2)**0.5
                 if distance < shield_diameter/2 + obstacle_widget.size[0]/2:
                     self.obstacles_coordinates.remove(obstacle_coord)
+                    self.on_obstacle_destroyed()
 
                     # Add explosion
                     explosion = Rectangle(
@@ -502,11 +517,7 @@ class MainWidget(RelativeLayout):
             while self.current_offset_y >= spacing_y:
                 self.current_offset_y -= spacing_y
                 self.current_y_loop += 1
-                self.score_txt = "SCORE: " + str(self.current_y_loop)
-                if self.current_y_loop >= self.last_life_award_score + 50:
-                    self.last_life_award_score += 50
-                    self.shield_level += 1
-                    self.shield_txt = "LIVES: " + str(self.shield_level)
+                self.distance_txt = "DISTANCE: " + str(self.current_y_loop)
                 self.generate_tiles_coordinates()
                 print("loop : " + str(self.current_y_loop))
 
@@ -514,23 +525,30 @@ class MainWidget(RelativeLayout):
             self.current_offset_x += speed_x * time_factor
 
         if not self.state_game_over:
+            if self.ship_invincible:
+                self.ship_invincible_time -= dt
+                if self.ship_invincible_time <= 0:
+                    self.ship_invincible = False
+
             if not self.check_ship_collision():
                 self.trigger_game_over()
                 return
 
             for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
                 if self.check_ship_collision_with_tile(obstacle_coord[0], obstacle_coord[1]):
-                    self.shield_level -= 1
-                    self.shield_txt = "LIVES: " + str(self.shield_level)
+                    if not self.ship_invincible:
+                        self.lives -= 1
+                        self.lives_txt = "LIVES: " + str(self.lives)
+                        self.ship_invincible = True
+                        self.ship_invincible_time = 1.5
+                        if self.lives == 0:
+                            self.trigger_game_over()
+                        else:
+                            if self.sound_explosion:
+                                self.sound_explosion.play()
                     self.obstacles_coordinates.remove(obstacle_coord)
                     self.obstacles[i].size = (0, 0)
-                    if self.shield_level == 0:
-                        self.trigger_game_over()
-                    else:
-                        # Play shield hit sound, which is the explosion sound for now
-                        if self.sound_explosion:
-                            self.sound_explosion.play()
-                    break # only handle one collision per frame
+                    break
 
     def play_game_over_voice_sound(self, dt):
         if self.state_game_over:
@@ -545,6 +563,14 @@ class MainWidget(RelativeLayout):
         self.sound_gameover_impact.play()
         Clock.schedule_once(self.play_game_over_voice_sound, 3)
         print("GAME OVER")
+
+    def on_obstacle_destroyed(self):
+        self.score += 25
+        self.score_txt = "SCORE: " + str(self.score)
+        if self.score >= self.last_shield_award_score + 100:
+            self.last_shield_award_score += 100
+            self.shield_count += 3
+            self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
 
     def remove_explosion(self, explosion):
         if explosion in self.explosions:
@@ -562,8 +588,10 @@ class MainWidget(RelativeLayout):
                 self.lasers.append(laser)
 
     def activate_shield(self):
-        if not self.shield_active and not self.state_game_over:
+        if not self.shield_active and not self.state_game_over and self.shield_count > 0:
             self.shield_active = True
+            self.shield_count -= 1
+            self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
             if self.sound_shield:
                 self.sound_shield.play()
             self.canvas.add(self.shield_instruction_group)

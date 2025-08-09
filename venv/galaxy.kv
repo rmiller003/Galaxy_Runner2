@@ -14,13 +14,25 @@ MainWidget:
     MenuWidget:
         id: menu_widget
     Label:
-        text: root.score_txt
+        text: root.distance_txt
         font_size: dp(20)
         font_name: 'fonts/Eurostile.ttf'
         size_hint: .18, .2
         pos_hint: {"x": 0, "top": 1}
     Label:
-        text: root.shield_txt
+        text: root.score_txt
+        font_size: dp(20)
+        font_name: 'fonts/Eurostile.ttf'
+        size_hint: .18, .2
+        pos_hint: {"center_x": 0.5, "top": 1}
+    Label:
+        text: root.shield_count_txt
+        font_size: dp(20)
+        font_name: 'fonts/Eurostile.ttf'
+        size_hint: .18, .2
+        pos_hint: {"right": 1, "top": 1}
+    Label:
+        text: root.lives_txt
         font_size: dp(20)
         font_name: 'fonts/Eurostile.ttf'
         size_hint: .18, .2
