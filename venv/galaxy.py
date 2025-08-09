@@ -18,6 +18,7 @@ from kivy.graphics.vertex_instructions import Line, Quad, Triangle, Ellipse, Rec
 from kivy.graphics import InstructionGroup
 from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty, BooleanProperty
 from kivy.uix.widget import Widget
+from kivy.uix.button import Button
 
 Builder.load_file("menu.kv")
 
@@ -84,6 +85,7 @@ class MainWidget(RelativeLayout):
 
     state_game_over = False
     state_game_has_started = False
+    state_game_paused = False
 
     menu_title = StringProperty("G A L A X Y   R U N N E R ")
     menu_button_title = StringProperty("START")
@@ -136,6 +138,10 @@ class MainWidget(RelativeLayout):
             Color(1, 0.5, 0, 0.8)
             self.power_up_timer_bar = Rectangle(pos=(10, self.height - 30), size=(self.width - 20, 20))
 
+        self.pause_button = Button(text="Pause", size_hint=(None, None), pos=(self.width - 120, self.height - 50), size=(100, 40))
+        self.pause_button.bind(on_press=self.toggle_pause)
+        self.add_widget(self.pause_button)
+
         self.reset_game()
 
         Window.bind(on_key_down=self._on_keyboard_down)
@@ -143,6 +149,18 @@ class MainWidget(RelativeLayout):
 
         Clock.schedule_interval(self.update, 1.0 / 60.0)
         self.sound_galaxy.play()
+
+    def toggle_pause(self, instance):
+        if self.state_game_over:
+            return
+
+        self.state_game_paused = not self.state_game_paused
+        if self.state_game_paused:
+            self.pause_button.text = "Resume"
+            self.sound_music1.stop()
+        else:
+            self.pause_button.text = "Pause"
+            self.sound_music1.play()
 
     def init_audio(self):
         self.sound_begin = SoundLoader.load("audio/begin.wav")
@@ -188,7 +206,7 @@ class MainWidget(RelativeLayout):
         for laser_dict in self.enemy_lasers:
             self.canvas.remove(laser_dict['group'])
         for obstacle_dict in self.obstacles_coordinates:
-            if obstacle_dict['shield_graphic']:
+            if obstacle_dict.get('shield_graphic'):
                 self.canvas.remove(obstacle_dict['shield_graphic'])
 
         self.obstacles_coordinates = []
@@ -241,6 +259,9 @@ class MainWidget(RelativeLayout):
         return True
 
     def on_touch_down(self, touch):
+        if not self.menu_widget.opacity and self.pause_button.collide_point(*touch.pos):
+            self.toggle_pause(self.pause_button)
+            return True
         return super().on_touch_down(touch)
 
     def on_touch_up(self, touch):
@@ -451,13 +472,13 @@ class MainWidget(RelativeLayout):
             screen_height = max_y - min_y
 
             # Make the obstacle a circle with 90% of the smaller dimension of the tile
-            diameter = min(screen_width, screen_height) * 0.9
+            diameter = min(screen_width, screen_height) * 0.5
             obstacle.size = (diameter, diameter)
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
             if obstacle_dict['has_shield']:
                 shield_graphic = obstacle_dict['shield_graphic'].children[1]
-                shield_graphic.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.6)
+                shield_graphic.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.5)
 
 
             if self.state_game_has_started and random.random() < 0.01:
@@ -745,6 +766,9 @@ class MainWidget(RelativeLayout):
                     Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
 
     def update(self, dt):
+        if self.state_game_paused:
+            return
+
         time_factor = dt*60
         self.update_vertical_lines()
         self.update_horizontal_lines()
@@ -859,6 +883,8 @@ class MainWidget(RelativeLayout):
                         else:
                             if self.sound_explosion:
                                 self.sound_explosion.play()
+                    if obstacle_dict['shield_graphic']:
+                        self.canvas.remove(obstacle_dict['shield_graphic'])
                     self.obstacles_coordinates.remove(obstacle_dict)
                     self.obstacles[i].size = (0, 0)
                     break
