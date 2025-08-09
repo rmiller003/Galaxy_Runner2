@@ -107,6 +107,7 @@ class MainWidget(RelativeLayout):
     sound_restart = None
     sound_orange = None
     sound_laser_zap = None
+    sound_powerup = None
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
@@ -154,6 +155,7 @@ class MainWidget(RelativeLayout):
         self.sound_shield = SoundLoader.load("audio/shields.wav")
         self.sound_orange = SoundLoader.load("audio/orange.wav")
         self.sound_laser_zap = SoundLoader.load("audio/laser-zap.wav")
+        self.sound_powerup = SoundLoader.load("audio/powerup.wav")
 
 
         self.sound_music1.volume = 1
@@ -167,6 +169,7 @@ class MainWidget(RelativeLayout):
         self.sound_gameover_impact.volume = .6
         self.sound_orange.volume = .25
         self.sound_laser_zap.volume = .25
+        self.sound_powerup.volume = .25
 
     def reset_game(self):
         self.current_offset_y = 0
@@ -183,7 +186,7 @@ class MainWidget(RelativeLayout):
             obstacle.size = (0, 0)
         self.lives = 4
         self.lives_txt = "LIVES: " + str(self.lives)
-        self.shield_count = 3
+        self.shield_count = 5
         self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
         self.score = 0
         self.last_life_award_score = 0
@@ -586,8 +589,10 @@ class MainWidget(RelativeLayout):
 
             # Off-screen check
             if laser.points[1] < 0 or laser.points[1] > self.height:
-                self.enemy_lasers.remove(laser_dict)
+                self.canvas.remove(laser_dict['color'])
+                self.canvas.remove(laser_dict['widget'])
                 self.canvas.remove(laser_dict['group'])
+                self.enemy_lasers.remove(laser_dict)
                 continue
 
             # Collision with player shield
@@ -868,8 +873,8 @@ class MainWidget(RelativeLayout):
         self.power_up_active = True
         self.power_up_remaining_time = POWER_UP_DURATION
         self.ship_color.rgb = (1, 0.5, 0)
-        if self.sound_orange:
-            self.sound_orange.play()
+        if self.sound_powerup:
+            self.sound_powerup.play()
 
     def deactivate_power_up(self):
         self.power_up_active = False
