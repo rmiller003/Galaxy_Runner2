@@ -572,7 +572,7 @@ class MainWidget(RelativeLayout):
 
                     # Add explosion
                     explosion = Rectangle(
-                        source="images/explosion.jpg",
+                        source="images/explosion2.jpg",
                         pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
                         size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                     )
@@ -628,7 +628,7 @@ class MainWidget(RelativeLayout):
 
                         # Add explosion
                         explosion = Rectangle(
-                            source="images/explosion.jpg",
+                            source="images/explosion2.jpg",
                             pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
                             size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                         )
@@ -690,7 +690,7 @@ class MainWidget(RelativeLayout):
 
                         # Add explosion
                         explosion = Rectangle(
-                            source="images/explosion.jpg",
+                            source="images/explosion2.jpg",
                             pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
                             size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                         )
@@ -770,7 +770,7 @@ class MainWidget(RelativeLayout):
 
                     # Add explosion
                     explosion = Rectangle(
-                        source="images/explosion.jpg",
+                        source="images/explosion2.jpg",
                         pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
                         size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                     )
