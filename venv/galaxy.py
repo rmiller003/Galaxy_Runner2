@@ -91,12 +91,13 @@ class MainWidget(RelativeLayout):
     last_power_up_score = NumericProperty(0)
 
     sound_begin = None
-    sound_begin = None
     sound_galaxy = None
     sound_gameover_impact = None
     sound_gameover_voice = None
     sound_music1 = None
     sound_restart = None
+    sound_powerup = None
+    sound_enemy_fire = None
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
@@ -131,16 +132,27 @@ class MainWidget(RelativeLayout):
         self.sound_laser = SoundLoader.load("audio/laser.wav")
         self.sound_explosion = SoundLoader.load("audio/boom.wav")
         self.sound_shield = SoundLoader.load("audio/restart.wav")
+        self.sound_powerup = SoundLoader.load("audio/orange.wav")
+        self.sound_enemy_fire = SoundLoader.load("audio/laser-zap.wav")
 
-        self.sound_music1.volume = 1
-        self.sound_laser.volume = .25
-        self.sound_explosion.volume = .25
-        self.sound_shield.volume = .25
-        self.sound_begin.volume = .25
-        self.sound_galaxy.volume = .25
-        self.sound_gameover_voice.volume = .25
-        self.sound_restart.volume = .25
-        self.sound_gameover_impact.volume =.6
+        if self.sound_music1:
+            self.sound_music1.volume = 1
+        if self.sound_laser:
+            self.sound_laser.volume = .25
+        if self.sound_explosion:
+            self.sound_explosion.volume = .5
+        if self.sound_shield:
+            self.sound_shield.volume = .25
+        if self.sound_begin:
+            self.sound_begin.volume = .25
+        if self.sound_galaxy:
+            self.sound_galaxy.volume = .25
+        if self.sound_gameover_voice:
+            self.sound_gameover_voice.volume = .25
+        if self.sound_restart:
+            self.sound_restart.volume = .25
+        if self.sound_gameover_impact:
+            self.sound_gameover_impact.volume = .6
 
     def reset_game(self):
         self.current_offset_y = 0
@@ -404,6 +416,8 @@ class MainWidget(RelativeLayout):
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
             if random.random() < 0.01:
+                if self.sound_enemy_fire:
+                    self.sound_enemy_fire.play()
                 laser_group = InstructionGroup()
                 laser_color = Color(1, 0, 1) # Magenta
                 x = obstacle.pos[0] + obstacle.size[0] / 2
@@ -763,6 +777,8 @@ class MainWidget(RelativeLayout):
     def activate_power_up(self):
         self.power_up_active = True
         self.ship_color.rgb = (1, 0.5, 0)
+        if self.sound_powerup:
+            self.sound_powerup.play()
         Clock.schedule_once(self.deactivate_power_up, 20)
 
     def deactivate_power_up(self, dt):
