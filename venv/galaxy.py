@@ -158,6 +158,7 @@ class MainWidget(RelativeLayout):
         self.sound_powerup = SoundLoader.load("audio/powerup.wav")
 
 
+        self.sound_music1.loop = True
         self.sound_music1.volume = 1
         self.sound_laser.volume = .25
         self.sound_explosion.volume = .75
@@ -426,8 +427,8 @@ class MainWidget(RelativeLayout):
             screen_width = max_x - min_x
             screen_height = max_y - min_y
 
-            # Make the obstacle a circle with 50% of the smaller dimension of the tile
-            diameter = min(screen_width, screen_height) * 0.5
+            # Make the obstacle a circle with 80% of the smaller dimension of the tile
+            diameter = min(screen_width, screen_height) * 0.8
             obstacle.size = (diameter, diameter)
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
@@ -671,7 +672,7 @@ class MainWidget(RelativeLayout):
 
     def update_shield(self):
         if self.shield_active:
-            shield_diameter = self.width * self.SHIP_WIDTH * 1.2
+            shield_diameter = self.width * self.SHIP_WIDTH * 1.0
             center_x = self.ship.pos[0] + self.ship.size[0] / 2
             center_y = self.ship.pos[1] + self.ship.size[1] / 2
 
