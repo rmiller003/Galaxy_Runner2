@@ -184,7 +184,7 @@ class MainWidget(RelativeLayout):
         self.enemy_lasers = []
         for obstacle in self.obstacles:
             obstacle.size = (0, 0)
-        self.lives = 4
+        self.lives = 5
         self.lives_txt = "LIVES: " + str(self.lives)
         self.shield_count = 5
         self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
@@ -255,24 +255,21 @@ class MainWidget(RelativeLayout):
 
     def init_ship(self):
         with self.canvas:
-            self.ship_color = Color(0, 0, 1)
-            self.ship = Triangle()
+            self.ship = Rectangle(source="images/USS Enterprise.png")
 
     def update_ship(self):
         center_x = self.width / 2
         base_y = self.SHIP_BASE_Y * self.height
-        ship_half_width = self.SHIP_WIDTH * self.width / 2
+        ship_width = self.SHIP_WIDTH * self.width
         ship_height = self.SHIP_HEIGHT * self.height
 
-        self.ship_coordinates[0] = (center_x - ship_half_width, base_y)
+        self.ship_coordinates[0] = (center_x - ship_width / 2, base_y)
         self.ship_coordinates[1] = (center_x, base_y + ship_height)
-        self.ship_coordinates[2] = (center_x + ship_half_width, base_y)
+        self.ship_coordinates[2] = (center_x + ship_width / 2, base_y)
 
-        x1, y1 = self.transform(*self.ship_coordinates[0])
-        x2, y2 = self.transform(*self.ship_coordinates[1])
-        x3, y3 = self.transform(*self.ship_coordinates[2])
-
-        self.ship.points = [x1, y1, x2, y2, x3, y3]
+        x, y = self.transform(center_x, base_y)
+        self.ship.pos = (x - ship_width / 2, y)
+        self.ship.size = (ship_width, ship_height)
 
     def check_ship_collision(self):
         for i in range(0, len(self.tiles_coordinates)):
@@ -596,10 +593,8 @@ class MainWidget(RelativeLayout):
             # Collision with player shield
             if self.shield_active and velocity < 0:
                 shield_diameter = self.width * self.SHIP_WIDTH * 1.2
-                center_x = self.ship.points[2]
-                y_nose = self.ship.points[3]
-                y_base = self.ship.points[1]
-                center_y = y_base + (y_nose - y_base) / 2
+                center_x = self.ship.pos[0] + self.ship.size[0] / 2
+                center_y = self.ship.pos[1] + self.ship.size[1] / 2
                 laser_x = laser.points[0]
                 laser_y = laser.points[1]
                 distance = ((laser_x - center_x)**2 + (laser_y - center_y)**2)**0.5
@@ -640,10 +635,10 @@ class MainWidget(RelativeLayout):
 
             # Collision with player (only for incoming lasers)
             if velocity < 0 and not self.ship_invincible:
-                ship_min_x = self.ship.points[0]
-                ship_max_x = self.ship.points[4]
-                ship_min_y = self.ship.points[1]
-                ship_max_y = self.ship.points[3]
+                ship_min_x = self.ship.pos[0]
+                ship_max_x = self.ship.pos[0] + self.ship.size[0]
+                ship_min_y = self.ship.pos[1]
+                ship_max_y = self.ship.pos[1] + self.ship.size[1]
                 laser_x = laser.points[0]
                 laser_y = laser.points[1]
 
@@ -656,8 +651,8 @@ class MainWidget(RelativeLayout):
                     self.ship_invincible_time = 1.5
 
                     # Add explosion on ship
-                    ship_center_x = self.ship.points[2]
-                    ship_center_y = (self.ship.points[1] + self.ship.points[3]) / 2
+                    ship_center_x = self.ship.pos[0] + self.ship.size[0] / 2
+                    ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
                     explosion_size = self.width * self.SHIP_WIDTH * 1.5
                     explosion = Rectangle(
                         source="images/explosion.jpg",
@@ -678,10 +673,8 @@ class MainWidget(RelativeLayout):
     def update_shield(self):
         if self.shield_active:
             shield_diameter = self.width * self.SHIP_WIDTH * 1.2
-            center_x = self.ship.points[2]
-            y_nose = self.ship.points[3]
-            y_base = self.ship.points[1]
-            center_y = y_base + (y_nose - y_base) / 2
+            center_x = self.ship.pos[0] + self.ship.size[0] / 2
+            center_y = self.ship.pos[1] + self.ship.size[1] / 2
 
             radius = shield_diameter / 2
             self.inner_shield_graphic.pos = (center_x - radius, center_y - radius)
@@ -784,8 +777,8 @@ class MainWidget(RelativeLayout):
                 self.current_offset_x = 0
 
                 # Add explosion on ship
-                ship_center_x = self.ship.points[2]
-                ship_center_y = (self.ship.points[1] + self.ship.points[3]) / 2
+                ship_center_x = self.ship.pos[0] + self.ship.size[0] / 2
+                ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
                 explosion_size = self.width * self.SHIP_WIDTH * 1.5
                 explosion = Rectangle(
                     source="images/explosion.jpg",
@@ -812,8 +805,8 @@ class MainWidget(RelativeLayout):
                         self.ship_invincible_time = 1.5
 
                         # Add explosion on ship
-                        ship_center_x = self.ship.points[2]
-                        ship_center_y = (self.ship.points[1] + self.ship.points[3]) / 2
+                        ship_center_x = self.ship.pos[0] + self.ship.size[0] / 2
+                        ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
                         explosion_size = self.width * self.SHIP_WIDTH * 1.5
                         explosion = Rectangle(
                             source="images/explosion.jpg",
@@ -870,13 +863,11 @@ class MainWidget(RelativeLayout):
     def activate_power_up(self):
         self.power_up_active = True
         self.power_up_remaining_time = POWER_UP_DURATION
-        self.ship_color.rgb = (1, 0.5, 0)
         if self.sound_powerup:
             self.sound_powerup.play()
 
     def deactivate_power_up(self):
         self.power_up_active = False
-        self.ship_color.rgb = (0, 0, 1)
 
     def remove_explosion(self, explosion):
         if explosion in self.explosions:
@@ -891,23 +882,20 @@ class MainWidget(RelativeLayout):
                 if self.power_up_active:
                     Color(1, 1, 0) # Yellow
                     # Fire two bullets
-                    x1 = self.ship.points[0]
-                    y1 = self.ship.points[1]
-                    x2 = self.ship.points[4]
-                    y2 = self.ship.points[5]
+                    x = self.ship.pos[0]
+                    y = self.ship.pos[1] + self.ship.size[1] * 0.5
 
-                    # Move the bullets closer to the center
-                    margin = (x2 - x1) * 0.25
-                    bullet1 = Rectangle(pos=(x1 + margin, y1), size=(10, 20))
+                    margin = self.ship.size[0] * 0.25
+                    bullet1 = Rectangle(pos=(x + margin, y), size=(10, 20))
                     self.bullets.append(bullet1)
 
-                    bullet2 = Rectangle(pos=(x2 - margin, y2), size=(10, 20))
+                    bullet2 = Rectangle(pos=(x + self.ship.size[0] - margin, y), size=(10, 20))
                     self.bullets.append(bullet2)
                 else:
                     Color(0, 0, 1) # Blue
                     # Fire one laser
-                    x = self.ship.points[2]
-                    y = self.ship.points[3]
+                    x = self.ship.pos[0] + self.ship.size[0] / 2
+                    y = self.ship.pos[1] + self.ship.size[1]
                     laser = Line(points=[x, y, x, y + 10], width=2)
                     self.lasers.append(laser)
 
