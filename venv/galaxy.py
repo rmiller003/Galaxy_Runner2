@@ -75,8 +75,8 @@ class MainWidget(RelativeLayout):
     power_up_active = BooleanProperty(False)
     power_up_remaining_time = NumericProperty(0)
 
-    SHIP_WIDTH = .1
-    SHIP_HEIGHT = 0.035
+    SHIP_WIDTH = .2
+    SHIP_HEIGHT = 0.07
     SHIP_BASE_Y = 0.04
     ship = None
     ship_coordinates = [(0, 0), (0, 0), (0, 0)]
@@ -432,7 +432,7 @@ class MainWidget(RelativeLayout):
             obstacle.size = (diameter, diameter)
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
-            if random.random() < 0.01:
+            if self.state_game_has_started and random.random() < 0.01:
                 if self.sound_laser_zap:
                     self.sound_laser_zap.play()
                 laser_group = InstructionGroup()
@@ -702,7 +702,6 @@ class MainWidget(RelativeLayout):
                     self.explosions.append(explosion)
                     self.canvas.add(explosion)
 
-                    obstacle_widget.size = (0, 0)
                     if self.sound_explosion:
                         self.sound_explosion.play()
                     Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
