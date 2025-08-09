@@ -67,6 +67,7 @@ class MainWidget(RelativeLayout):
 
     ship_invincible = BooleanProperty(False)
     ship_invincible_time = NumericProperty(0)
+    shield_remaining_time = NumericProperty(0)
 
     power_up_active = BooleanProperty(False)
 
@@ -112,7 +113,7 @@ class MainWidget(RelativeLayout):
         self.init_ship()
 
         self.shield_instruction_group = InstructionGroup()
-        self.shield_graphic = Ellipse()
+        self.shield_graphic = Line(width=2, dash_length=10, dash_offset=10)
         self.shield_instruction_group.add(Color(0, 0, 1, 0.5))
         self.shield_instruction_group.add(self.shield_graphic)
 
@@ -606,19 +607,20 @@ class MainWidget(RelativeLayout):
     def update_shield(self):
         if self.shield_active:
             shield_diameter = self.width * self.SHIP_WIDTH * 1.2
-            self.shield_graphic.size = (shield_diameter, shield_diameter)
             center_x = self.ship.points[2]
             y_nose = self.ship.points[3]
             y_base = self.ship.points[1]
             center_y = y_base + (y_nose - y_base) / 2
-            self.shield_graphic.pos = (center_x - shield_diameter / 2, center_y - shield_diameter / 2)
+
+            angle_end = 360 * (self.shield_remaining_time / 5.0)
+            self.shield_graphic.circle = (center_x, center_y, shield_diameter / 2, 0, angle_end)
 
             for i, obstacle_coord in enumerate(self.obstacles_coordinates[:]):
                 obstacle_widget = self.obstacles[i]
                 if obstacle_widget.size == [0, 0]:
                     continue
-                dx = self.shield_graphic.pos[0] + shield_diameter/2 - (obstacle_widget.pos[0] + obstacle_widget.size[0]/2)
-                dy = self.shield_graphic.pos[1] + shield_diameter/2 - (obstacle_widget.pos[1] + obstacle_widget.size[1]/2)
+                dx = center_x - (obstacle_widget.pos[0] + obstacle_widget.size[0]/2)
+                dy = center_y - (obstacle_widget.pos[1] + obstacle_widget.size[1]/2)
                 distance = (dx**2 + dy**2)**0.5
                 if distance < shield_diameter/2 + obstacle_widget.size[0]/2:
                     self.obstacles_coordinates.remove(obstacle_coord)
@@ -648,6 +650,11 @@ class MainWidget(RelativeLayout):
         self.update_enemy_lasers()
         self.update_ship()
         self.update_shield()
+
+        if self.shield_active:
+            self.shield_remaining_time -= dt
+            if self.shield_remaining_time <= 0:
+                self.deactivate_shield()
 
         if not self.state_game_over and self.state_game_has_started:
             speed_y = self.SPEED * self.height / 100
@@ -811,14 +818,14 @@ class MainWidget(RelativeLayout):
     def activate_shield(self):
         if not self.shield_active and not self.state_game_over and self.shield_count > 0:
             self.shield_active = True
+            self.shield_remaining_time = 5.0
             self.shield_count -= 1
             self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
             if self.sound_shield:
                 self.sound_shield.play()
             self.canvas.add(self.shield_instruction_group)
-            Clock.schedule_once(self.deactivate_shield, 5)
 
-    def deactivate_shield(self, dt):
+    def deactivate_shield(self):
         self.shield_active = False
         self.canvas.remove(self.shield_instruction_group)
 
