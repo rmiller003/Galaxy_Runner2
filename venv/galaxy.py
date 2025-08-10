@@ -753,7 +753,7 @@ class MainWidget(RelativeLayout):
             radius = shield_diameter / 2
             self.inner_shield_graphic.pos = (center_x - radius, center_y - radius)
             self.inner_shield_graphic.size = (shield_diameter, shield_diameter)
-            angle_end = 360 * (self.shield_remaining_time / 5.0)
+            angle_end = 360 * (self.shield_remaining_time / 7.0)
             self.shield_graphic.circle = (center_x, center_y, radius, 0, angle_end)
 
             for i, obstacle_dict in enumerate(self.obstacles_coordinates[:]):
@@ -983,7 +983,7 @@ class MainWidget(RelativeLayout):
     def activate_shield(self):
         if not self.shield_active and not self.state_game_over and self.shield_count > 0:
             self.shield_active = True
-            self.shield_remaining_time = 5.0
+            self.shield_remaining_time = 7.0
             self.shield_count -= 1
             self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
             if self.sound_shield:
