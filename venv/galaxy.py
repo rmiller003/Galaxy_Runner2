@@ -596,8 +596,11 @@ class MainWidget(RelativeLayout):
                 if min_x < bullet_x + bullet_w and bullet_x < max_x and min_y < bullet_y + bullet_h and bullet_y < max_y:
                     # Collision
                     if obstacle_dict['has_shield']:
-                        # Reflect bullet
-                        bullet_dict['velocity'] = -velocity
+                        # Absorb bullet
+                        self.bullets.remove(bullet_dict)
+                        self.canvas.remove(bullet_dict['widget'])
+
+                        # Remove shield
                         if self.sound_shield:
                             self.sound_shield.play()
                         obstacle_dict['has_shield'] = False
@@ -657,8 +660,11 @@ class MainWidget(RelativeLayout):
                 laser_y = laser.points[1]
                 distance = ((laser_x - center_x)**2 + (laser_y - center_y)**2)**0.5
                 if distance < shield_diameter / 2:
-                    laser_dict['velocity_y'] = -velocity # Reflect
-                    laser_dict['color'].rgb = self.CYAN
+                    # Absorb laser
+                    if self.sound_shield:
+                        self.sound_shield.play()
+                    self.enemy_lasers.remove(laser_dict)
+                    self.canvas.remove(laser_dict['group'])
                     continue
 
             # Collision with obstacles (only for reflected lasers)
