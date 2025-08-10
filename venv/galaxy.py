@@ -15,7 +15,8 @@ from kivy.core.window import Window
 from kivy.app import App
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line, Quad, Triangle, Ellipse, Rectangle
-from kivy.graphics.instructions import InstructionGroup, BlendMode
+from kivy.graphics.instructions import InstructionGroup, Callback
+from kivy.graphics.opengl import glBlendFunc, GL_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA
 from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty, BooleanProperty
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
@@ -574,7 +575,7 @@ class MainWidget(RelativeLayout):
 
                     # Add explosion
                     explosion_group = InstructionGroup()
-                    explosion_group.add(BlendMode('add'))
+                    explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE)))
                     explosion_group.add(
                         Rectangle(
                             source="images/explosion.jpg",
@@ -582,7 +583,7 @@ class MainWidget(RelativeLayout):
                             size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                         )
                     )
-                    explosion_group.add(BlendMode('normal'))
+                    explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)))
                     self.explosions.append(explosion_group)
                     self.canvas.add(explosion_group)
 
@@ -638,7 +639,7 @@ class MainWidget(RelativeLayout):
 
                         # Add explosion
                         explosion_group = InstructionGroup()
-                        explosion_group.add(BlendMode('add'))
+                        explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE)))
                         explosion_group.add(
                             Rectangle(
                                 source="images/explosion.jpg",
@@ -646,7 +647,7 @@ class MainWidget(RelativeLayout):
                                 size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                             )
                         )
-                        explosion_group.add(BlendMode('normal'))
+                        explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)))
                         self.explosions.append(explosion_group)
                         self.canvas.add(explosion_group)
 
@@ -707,7 +708,7 @@ class MainWidget(RelativeLayout):
 
                         # Add explosion
                         explosion_group = InstructionGroup()
-                        explosion_group.add(BlendMode('add'))
+                        explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE)))
                         explosion_group.add(
                             Rectangle(
                                 source="images/explosion.jpg",
@@ -715,7 +716,7 @@ class MainWidget(RelativeLayout):
                                 size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                             )
                         )
-                        explosion_group.add(BlendMode('normal'))
+                        explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)))
                         self.explosions.append(explosion_group)
                         self.canvas.add(explosion_group)
                         obstacle_widget.size = (0, 0)
@@ -744,7 +745,7 @@ class MainWidget(RelativeLayout):
                     ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
                     explosion_size = self.width * self.SHIP_WIDTH * 1.5
                     explosion_group = InstructionGroup()
-                    explosion_group.add(BlendMode('add'))
+                    explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE)))
                     explosion_group.add(
                         Rectangle(
                             source="images/explosion.jpg",
@@ -752,7 +753,7 @@ class MainWidget(RelativeLayout):
                             size=(explosion_size, explosion_size)
                         )
                     )
-                    explosion_group.add(BlendMode('normal'))
+                    explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)))
                     self.explosions.append(explosion_group)
                     self.canvas.add(explosion_group)
                     Clock.schedule_once(lambda dt: self.remove_explosion(explosion_group), 0.5)
@@ -797,7 +798,7 @@ class MainWidget(RelativeLayout):
 
                     # Add explosion
                     explosion_group = InstructionGroup()
-                    explosion_group.add(BlendMode('add'))
+                    explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE)))
                     explosion_group.add(
                         Rectangle(
                             source="images/explosion.jpg",
@@ -805,7 +806,7 @@ class MainWidget(RelativeLayout):
                             size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                         )
                     )
-                    explosion_group.add(BlendMode('normal'))
+                    explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)))
                     self.explosions.append(explosion_group)
                     self.canvas.add(explosion_group)
 
@@ -889,7 +890,7 @@ class MainWidget(RelativeLayout):
                 ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
                 explosion_size = self.width * self.SHIP_WIDTH * 1.5
                 explosion_group = InstructionGroup()
-                explosion_group.add(BlendMode('add'))
+                explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE)))
                 explosion_group.add(
                     Rectangle(
                         source="images/explosion.jpg",
@@ -897,7 +898,7 @@ class MainWidget(RelativeLayout):
                         size=(explosion_size, explosion_size)
                     )
                 )
-                explosion_group.add(BlendMode('normal'))
+                explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)))
                 self.explosions.append(explosion_group)
                 self.canvas.add(explosion_group)
                 Clock.schedule_once(lambda dt: self.remove_explosion(explosion_group), 0.5)
@@ -922,7 +923,7 @@ class MainWidget(RelativeLayout):
                         ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
                         explosion_size = self.width * self.SHIP_WIDTH * 1.5
                         explosion_group = InstructionGroup()
-                        explosion_group.add(BlendMode('add'))
+                        explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE)))
                         explosion_group.add(
                             Rectangle(
                                 source="images/explosion.jpg",
@@ -930,7 +931,7 @@ class MainWidget(RelativeLayout):
                                 size=(explosion_size, explosion_size)
                             )
                         )
-                        explosion_group.add(BlendMode('normal'))
+                        explosion_group.add(Callback(lambda *args: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)))
                         self.explosions.append(explosion_group)
                         self.canvas.add(explosion_group)
                         Clock.schedule_once(lambda dt: self.remove_explosion(explosion_group), 0.5)
