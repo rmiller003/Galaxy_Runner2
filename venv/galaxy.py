@@ -376,13 +376,20 @@ class MainWidget(RelativeLayout):
             for i in range(10, len(self.tiles_coordinates), 20):
                 if len(self.obstacles_coordinates) < self.NB_OBSTACLES:
                     has_shield = random.random() < 0.3
-                    shield_graphic = None
+                    shield_graphic_group = None
+                    shield_line = None
                     if has_shield:
-                        shield_graphic = InstructionGroup()
-                        shield_graphic.add(Color(1, 0, 0, 0.5))
-                        shield_graphic.add(Line(width=2))
-                        self.canvas.add(shield_graphic)
-                    self.obstacles_coordinates.append({'coord': self.tiles_coordinates[i], 'has_shield': has_shield, 'shield_graphic': shield_graphic})
+                        shield_graphic_group = InstructionGroup()
+                        shield_graphic_group.add(Color(1, 0, 0, 0.5))
+                        shield_line = Line(width=2)
+                        shield_graphic_group.add(shield_line)
+                        self.canvas.add(shield_graphic_group)
+                    self.obstacles_coordinates.append({
+                        'coord': self.tiles_coordinates[i],
+                        'has_shield': has_shield,
+                        'shield_graphic': shield_graphic_group,
+                        'shield_line': shield_line
+                    })
 
     def init_vertical_lines(self):
         with self.canvas:
@@ -456,8 +463,9 @@ class MainWidget(RelativeLayout):
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
             if obstacle_dict['has_shield']:
-                shield_graphic = obstacle_dict['shield_graphic'].children[1]
-                shield_graphic.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.6)
+                shield_line = obstacle_dict['shield_line']
+                if shield_line:
+                    shield_line.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.6)
 
 
             if self.state_game_has_started and random.random() < 0.01:
