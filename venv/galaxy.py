@@ -567,12 +567,14 @@ class MainWidget(RelativeLayout):
                     self.sound_explosion.play()
                     self.lasers.remove(laser)
                     self.canvas.remove(laser)
+                    if obstacle_dict.get('shield_graphic'):
+                        self.canvas.remove(obstacle_dict['shield_graphic'])
                     self.obstacles_coordinates.remove(obstacle_dict)
                     self.on_obstacle_destroyed()
 
                     # Add explosion
                     explosion = Rectangle(
-                        source="images/blast.jpg",
+                        source="images/explosion.jpg",
                         pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
                         size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                     )
@@ -619,16 +621,19 @@ class MainWidget(RelativeLayout):
                             self.sound_shield.play()
                         obstacle_dict['has_shield'] = False
                         self.canvas.remove(obstacle_dict['shield_graphic'])
+                        obstacle_dict['shield_graphic'] = None
                     else:
                         self.sound_explosion.play()
                         self.bullets.remove(bullet_dict)
                         self.canvas.remove(bullet)
+                        if obstacle_dict.get('shield_graphic'):
+                            self.canvas.remove(obstacle_dict['shield_graphic'])
                         self.obstacles_coordinates.remove(obstacle_dict)
                         self.on_obstacle_destroyed()
 
                         # Add explosion
                         explosion = Rectangle(
-                            source="images/blast.jpg",
+                            source="images/explosion.jpg",
                             pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
                             size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                         )
@@ -685,12 +690,14 @@ class MainWidget(RelativeLayout):
                     if min_x < laser_x < max_x and min_y < laser_y < max_y:
                         self.enemy_lasers.remove(laser_dict)
                         self.canvas.remove(laser_dict['group'])
+                        if obstacle_dict.get('shield_graphic'):
+                            self.canvas.remove(obstacle_dict['shield_graphic'])
                         self.obstacles_coordinates.remove(obstacle_dict)
                         self.on_obstacle_destroyed()
 
                         # Add explosion
                         explosion = Rectangle(
-                            source="images/blast.jpg",
+                            source="images/explosion.jpg",
                             pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
                             size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                         )
@@ -760,17 +767,17 @@ class MainWidget(RelativeLayout):
                     if obstacle_dict['has_shield']:
                         if self.sound_energy:
                             self.sound_energy.play()
-                        self.canvas.remove(obstacle_dict['shield_graphic'])
                     else:
                         if self.sound_explosion:
                             self.sound_explosion.play()
-
+                    if obstacle_dict.get('shield_graphic'):
+                        self.canvas.remove(obstacle_dict['shield_graphic'])
                     self.obstacles_coordinates.remove(obstacle_dict)
                     self.on_obstacle_destroyed()
 
                     # Add explosion
                     explosion = Rectangle(
-                        source="images/blast.jpg",
+                        source="images/explosion.jpg",
                         pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
                         size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                     )
