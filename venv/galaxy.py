@@ -764,12 +764,8 @@ class MainWidget(RelativeLayout):
                 dy = center_y - (obstacle_widget.pos[1] + obstacle_widget.size[1]/2)
                 distance = (dx**2 + dy**2)**0.5
                 if distance < shield_diameter/2 + obstacle_widget.size[0]/2:
-                    if obstacle_dict['has_shield']:
-                        if self.sound_energy:
-                            self.sound_energy.play()
-                    else:
-                        if self.sound_explosion:
-                            self.sound_explosion.play()
+                    if self.sound_energy:
+                        self.sound_energy.play()
                     if obstacle_dict.get('shield_graphic'):
                         self.canvas.remove(obstacle_dict['shield_graphic'])
                     self.obstacles_coordinates.remove(obstacle_dict)
