@@ -596,7 +596,9 @@ class MainWidget(RelativeLayout):
                         if self.sound_shield:
                             self.sound_shield.play()
                         obstacle_dict['has_shield'] = False
-                        self.canvas.remove(obstacle_dict['shield_graphic'])
+                        if obstacle_dict['shield_graphic']:
+                            obstacle_dict['shield_graphic'].clear()
+                            self.canvas.remove(obstacle_dict['shield_graphic'])
                     else:
                         self.sound_explosion.play()
                         self.bullets.remove(bullet_dict)
@@ -717,7 +719,7 @@ class MainWidget(RelativeLayout):
 
     def update_shield(self):
         if self.shield_active:
-            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5
+            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5 * 0.8
             center_x = self.ship.pos[0] + self.ship.size[0] / 2
             center_y = self.ship.pos[1] + self.ship.size[1] / 2
 
