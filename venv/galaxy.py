@@ -570,7 +570,12 @@ class MainWidget(RelativeLayout):
             velocity = bullet_dict['velocity']
             bullet.pos = (bullet.pos[0], bullet.pos[1] + velocity)
 
-            if bullet.pos[1] > self.height or bullet.pos[1] < 0:
+            is_off_screen = False
+            if velocity > 0 and bullet.pos[1] > self.height:
+                is_off_screen = True
+            if velocity < 0 and (bullet.pos[1] + bullet.size[1]) < 0:
+                is_off_screen = True
+            if is_off_screen:
                 self.bullets.remove(bullet_dict)
                 self.canvas.remove(bullet)
                 continue
@@ -632,7 +637,13 @@ class MainWidget(RelativeLayout):
             laser.points = points
 
             # Off-screen check
-            if laser.points[1] < 0 or laser.points[1] > self.height:
+            is_off_screen = False
+            if velocity < 0 and laser.points[1] < 0:
+                is_off_screen = True
+            elif velocity > 0 and laser.points[3] > self.height:
+                is_off_screen = True
+
+            if is_off_screen:
                 self.enemy_lasers.remove(laser_dict)
                 self.canvas.remove(laser_dict['group'])
                 continue
@@ -719,7 +730,7 @@ class MainWidget(RelativeLayout):
 
     def update_shield(self):
         if self.shield_active:
-            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5 * 0.8
+            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5 * 0.6
             center_x = self.ship.pos[0] + self.ship.size[0] / 2
             center_y = self.ship.pos[1] + self.ship.size[1] / 2
 
