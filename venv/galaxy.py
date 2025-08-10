@@ -15,7 +15,7 @@ from kivy.core.window import Window
 from kivy.app import App
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line, Quad, Triangle, Ellipse, Rectangle
-from kivy.graphics import InstructionGroup
+from kivy.graphics import InstructionGroup, BlendMode
 from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty, BooleanProperty
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
@@ -573,18 +573,23 @@ class MainWidget(RelativeLayout):
                     self.on_obstacle_destroyed()
 
                     # Add explosion
-                    explosion = Rectangle(
-                        source="images/explosion.jpg",
-                        pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
-                        size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                    explosion_group = InstructionGroup()
+                    explosion_group.add(BlendMode('add'))
+                    explosion_group.add(
+                        Rectangle(
+                            source="images/explosion.jpg",
+                            pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
+                            size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                        )
                     )
-                    self.explosions.append(explosion)
-                    self.canvas.add(explosion)
+                    explosion_group.add(BlendMode('normal'))
+                    self.explosions.append(explosion_group)
+                    self.canvas.add(explosion_group)
 
                     # "Remove" obstacle by making it size 0
                     obstacle_widget.size = (0, 0)
 
-                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion_group), 0.5)
 
                     break
 
@@ -632,18 +637,23 @@ class MainWidget(RelativeLayout):
                         self.on_obstacle_destroyed()
 
                         # Add explosion
-                        explosion = Rectangle(
-                            source="images/explosion.jpg",
-                            pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
-                            size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                        explosion_group = InstructionGroup()
+                        explosion_group.add(BlendMode('add'))
+                        explosion_group.add(
+                            Rectangle(
+                                source="images/explosion.jpg",
+                                pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
+                                size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                            )
                         )
-                        self.explosions.append(explosion)
-                        self.canvas.add(explosion)
+                        explosion_group.add(BlendMode('normal'))
+                        self.explosions.append(explosion_group)
+                        self.canvas.add(explosion_group)
 
                         # "Remove" obstacle by making it size 0
                         obstacle_widget.size = (0, 0)
 
-                        Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+                        Clock.schedule_once(lambda dt: self.remove_explosion(explosion_group), 0.5)
                     break
 
     def update_enemy_lasers(self):
@@ -696,15 +706,20 @@ class MainWidget(RelativeLayout):
                         self.on_obstacle_destroyed()
 
                         # Add explosion
-                        explosion = Rectangle(
-                            source="images/explosion.jpg",
-                            pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
-                            size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                        explosion_group = InstructionGroup()
+                        explosion_group.add(BlendMode('add'))
+                        explosion_group.add(
+                            Rectangle(
+                                source="images/explosion.jpg",
+                                pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
+                                size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                            )
                         )
-                        self.explosions.append(explosion)
-                        self.canvas.add(explosion)
+                        explosion_group.add(BlendMode('normal'))
+                        self.explosions.append(explosion_group)
+                        self.canvas.add(explosion_group)
                         obstacle_widget.size = (0, 0)
-                        Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+                        Clock.schedule_once(lambda dt: self.remove_explosion(explosion_group), 0.5)
                         break
 
             # Collision with player (only for incoming lasers)
@@ -728,14 +743,19 @@ class MainWidget(RelativeLayout):
                     ship_center_x = self.ship.pos[0] + self.ship.size[0] / 2
                     ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
                     explosion_size = self.width * self.SHIP_WIDTH * 1.5
-                    explosion = Rectangle(
-                        source="images/explosion.jpg",
-                        pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
-                        size=(explosion_size, explosion_size)
+                    explosion_group = InstructionGroup()
+                    explosion_group.add(BlendMode('add'))
+                    explosion_group.add(
+                        Rectangle(
+                            source="images/explosion.jpg",
+                            pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
+                            size=(explosion_size, explosion_size)
+                        )
                     )
-                    self.explosions.append(explosion)
-                    self.canvas.add(explosion)
-                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+                    explosion_group.add(BlendMode('normal'))
+                    self.explosions.append(explosion_group)
+                    self.canvas.add(explosion_group)
+                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion_group), 0.5)
 
                     if self.lives == 0:
                         self.trigger_game_over()
@@ -776,16 +796,21 @@ class MainWidget(RelativeLayout):
                     self.on_obstacle_destroyed()
 
                     # Add explosion
-                    explosion = Rectangle(
-                        source="images/explosion.jpg",
-                        pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
-                        size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                    explosion_group = InstructionGroup()
+                    explosion_group.add(BlendMode('add'))
+                    explosion_group.add(
+                        Rectangle(
+                            source="images/explosion.jpg",
+                            pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
+                            size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                        )
                     )
-                    self.explosions.append(explosion)
-                    self.canvas.add(explosion)
+                    explosion_group.add(BlendMode('normal'))
+                    self.explosions.append(explosion_group)
+                    self.canvas.add(explosion_group)
 
                     obstacle_widget.size = (0, 0)
-                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion_group), 0.5)
 
     def update(self, dt):
         if self.state_game_paused:
@@ -863,14 +888,19 @@ class MainWidget(RelativeLayout):
                 ship_center_x = self.ship.pos[0] + self.ship.size[0] / 2
                 ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
                 explosion_size = self.width * self.SHIP_WIDTH * 1.5
-                explosion = Rectangle(
-                    source="images/explosion.jpg",
-                    pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
-                    size=(explosion_size, explosion_size)
+                explosion_group = InstructionGroup()
+                explosion_group.add(BlendMode('add'))
+                explosion_group.add(
+                    Rectangle(
+                        source="images/explosion.jpg",
+                        pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
+                        size=(explosion_size, explosion_size)
+                    )
                 )
-                self.explosions.append(explosion)
-                self.canvas.add(explosion)
-                Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+                explosion_group.add(BlendMode('normal'))
+                self.explosions.append(explosion_group)
+                self.canvas.add(explosion_group)
+                Clock.schedule_once(lambda dt: self.remove_explosion(explosion_group), 0.5)
 
                 if self.lives == 0:
                     self.trigger_game_over()
@@ -891,14 +921,19 @@ class MainWidget(RelativeLayout):
                         ship_center_x = self.ship.pos[0] + self.ship.size[0] / 2
                         ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
                         explosion_size = self.width * self.SHIP_WIDTH * 1.5
-                        explosion = Rectangle(
-                            source="images/explosion.jpg",
-                            pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
-                            size=(explosion_size, explosion_size)
+                        explosion_group = InstructionGroup()
+                        explosion_group.add(BlendMode('add'))
+                        explosion_group.add(
+                            Rectangle(
+                                source="images/explosion.jpg",
+                                pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
+                                size=(explosion_size, explosion_size)
+                            )
                         )
-                        self.explosions.append(explosion)
-                        self.canvas.add(explosion)
-                        Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+                        explosion_group.add(BlendMode('normal'))
+                        self.explosions.append(explosion_group)
+                        self.canvas.add(explosion_group)
+                        Clock.schedule_once(lambda dt: self.remove_explosion(explosion_group), 0.5)
 
                         if self.lives == 0:
                             self.trigger_game_over()
