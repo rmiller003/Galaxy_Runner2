@@ -15,10 +15,9 @@ from kivy.core.window import Window
 from kivy.app import App
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line, Quad, Triangle, Ellipse, Rectangle
-from kivy.graphics.instructions import InstructionGroup
+from kivy.graphics import InstructionGroup
 from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty, BooleanProperty
 from kivy.uix.widget import Widget
-from kivy.uix.button import Button
 
 Builder.load_file("menu.kv")
 
@@ -63,6 +62,7 @@ class MainWidget(RelativeLayout):
     bullets = []
 
     explosions = []
+    obstacle_shields = []
 
     enemy_lasers = []
 
@@ -84,7 +84,6 @@ class MainWidget(RelativeLayout):
 
     state_game_over = False
     state_game_has_started = False
-    state_game_paused = False
 
     menu_title = StringProperty("G A L A X Y   R U N N E R ")
     menu_button_title = StringProperty("START")
@@ -110,7 +109,6 @@ class MainWidget(RelativeLayout):
     sound_orange = None
     sound_laser_zap = None
     sound_powerup = None
-    sound_energy = None
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
@@ -138,10 +136,6 @@ class MainWidget(RelativeLayout):
             Color(1, 0.5, 0, 0.8)
             self.power_up_timer_bar = Rectangle(pos=(10, self.height - 30), size=(self.width - 20, 20))
 
-        self.pause_button = Button(text="Pause", size_hint=(None, None), pos=(self.width - 120, self.height - 50), size=(100, 40))
-        self.pause_button.bind(on_press=self.toggle_pause)
-        self.add_widget(self.pause_button)
-
         self.reset_game()
 
         Window.bind(on_key_down=self._on_keyboard_down)
@@ -149,18 +143,6 @@ class MainWidget(RelativeLayout):
 
         Clock.schedule_interval(self.update, 1.0 / 60.0)
         self.sound_galaxy.play()
-
-    def toggle_pause(self, instance):
-        if self.state_game_over:
-            return
-
-        self.state_game_paused = not self.state_game_paused
-        if self.state_game_paused:
-            self.pause_button.text = "Resume"
-            self.sound_music1.stop()
-        else:
-            self.pause_button.text = "Pause"
-            self.sound_music1.play()
 
     def init_audio(self):
         self.sound_begin = SoundLoader.load("audio/begin.wav")
@@ -175,13 +157,12 @@ class MainWidget(RelativeLayout):
         self.sound_orange = SoundLoader.load("audio/orange.wav")
         self.sound_laser_zap = SoundLoader.load("audio/laser-zap.wav")
         self.sound_powerup = SoundLoader.load("audio/powerup.wav")
-        self.sound_energy = SoundLoader.load("audio/energy.wav")
 
 
         self.sound_music1.loop = True
         self.sound_music1.volume = 1
-        self.sound_laser.volume = .5
-        self.sound_explosion.volume = 1.0
+        self.sound_laser.volume = .25
+        self.sound_explosion.volume = .75
         self.sound_shield.volume = .75
         self.sound_begin.volume = .25
         self.sound_galaxy.volume = .25
@@ -191,7 +172,6 @@ class MainWidget(RelativeLayout):
         self.sound_orange.volume = .25
         self.sound_laser_zap.volume = .25
         self.sound_powerup.volume = 1.0
-        self.sound_energy.volume = .25
 
     def reset_game(self):
         self.current_offset_y = 0
@@ -208,7 +188,7 @@ class MainWidget(RelativeLayout):
         for laser_dict in self.enemy_lasers:
             self.canvas.remove(laser_dict['group'])
         for obstacle_dict in self.obstacles_coordinates:
-            if obstacle_dict.get('shield_graphic'):
+            if obstacle_dict['shield_graphic']:
                 self.canvas.remove(obstacle_dict['shield_graphic'])
 
         self.obstacles_coordinates = []
@@ -254,8 +234,6 @@ class MainWidget(RelativeLayout):
             self.fire_laser()
         elif key == 273: # up arrow
             self.activate_shield()
-        elif key == 112: # p
-            self.toggle_pause(None)
         return True
 
     def _on_keyboard_up(self, window, key, *args):
@@ -263,9 +241,6 @@ class MainWidget(RelativeLayout):
         return True
 
     def on_touch_down(self, touch):
-        if not self.menu_widget.opacity and self.pause_button.collide_point(*touch.pos):
-            self.toggle_pause(self.pause_button)
-            return True
         return super().on_touch_down(touch)
 
     def on_touch_up(self, touch):
@@ -481,13 +456,8 @@ class MainWidget(RelativeLayout):
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
             if obstacle_dict['has_shield']:
-                line_instruction = None
-                for instruction in obstacle_dict['shield_graphic'].children:
-                    if isinstance(instruction, Line):
-                        line_instruction = instruction
-                        break
-                if line_instruction:
-                    line_instruction.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.6)
+                shield_graphic = obstacle_dict['shield_graphic'].children[1]
+                shield_graphic.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.6)
 
 
             if self.state_game_has_started and random.random() < 0.01:
@@ -567,8 +537,6 @@ class MainWidget(RelativeLayout):
                     self.sound_explosion.play()
                     self.lasers.remove(laser)
                     self.canvas.remove(laser)
-                    if obstacle_dict.get('shield_graphic'):
-                        self.canvas.remove(obstacle_dict['shield_graphic'])
                     self.obstacles_coordinates.remove(obstacle_dict)
                     self.on_obstacle_destroyed()
 
@@ -576,7 +544,7 @@ class MainWidget(RelativeLayout):
                     explosion = Rectangle(
                         source="images/explosion.jpg",
                         pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
-                        size=(obstacle_widget.size[0] * 3, obstacle_widget.size[1] * 3)
+                        size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                     )
                     self.explosions.append(explosion)
                     self.canvas.add(explosion)
@@ -621,13 +589,10 @@ class MainWidget(RelativeLayout):
                             self.sound_shield.play()
                         obstacle_dict['has_shield'] = False
                         self.canvas.remove(obstacle_dict['shield_graphic'])
-                        obstacle_dict['shield_graphic'] = None
                     else:
                         self.sound_explosion.play()
                         self.bullets.remove(bullet_dict)
                         self.canvas.remove(bullet)
-                        if obstacle_dict.get('shield_graphic'):
-                            self.canvas.remove(obstacle_dict['shield_graphic'])
                         self.obstacles_coordinates.remove(obstacle_dict)
                         self.on_obstacle_destroyed()
 
@@ -635,7 +600,7 @@ class MainWidget(RelativeLayout):
                         explosion = Rectangle(
                             source="images/explosion.jpg",
                             pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
-                            size=(obstacle_widget.size[0] * 3, obstacle_widget.size[1] * 3)
+                            size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                         )
                         self.explosions.append(explosion)
                         self.canvas.add(explosion)
@@ -690,8 +655,6 @@ class MainWidget(RelativeLayout):
                     if min_x < laser_x < max_x and min_y < laser_y < max_y:
                         self.enemy_lasers.remove(laser_dict)
                         self.canvas.remove(laser_dict['group'])
-                        if obstacle_dict.get('shield_graphic'):
-                            self.canvas.remove(obstacle_dict['shield_graphic'])
                         self.obstacles_coordinates.remove(obstacle_dict)
                         self.on_obstacle_destroyed()
 
@@ -699,7 +662,7 @@ class MainWidget(RelativeLayout):
                         explosion = Rectangle(
                             source="images/explosion.jpg",
                             pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
-                            size=(obstacle_widget.size[0] * 3, obstacle_widget.size[1] * 3)
+                            size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                         )
                         self.explosions.append(explosion)
                         self.canvas.add(explosion)
@@ -727,7 +690,7 @@ class MainWidget(RelativeLayout):
                     # Add explosion on ship
                     ship_center_x = self.ship.pos[0] + self.ship.size[0] / 2
                     ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
-                    explosion_size = self.width * self.SHIP_WIDTH * 2.0
+                    explosion_size = self.width * self.SHIP_WIDTH * 1.5
                     explosion = Rectangle(
                         source="images/explosion.jpg",
                         pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
@@ -746,14 +709,14 @@ class MainWidget(RelativeLayout):
 
     def update_shield(self):
         if self.shield_active:
-            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5 * 0.6
+            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5
             center_x = self.ship.pos[0] + self.ship.size[0] / 2
             center_y = self.ship.pos[1] + self.ship.size[1] / 2
 
             radius = shield_diameter / 2
             self.inner_shield_graphic.pos = (center_x - radius, center_y - radius)
             self.inner_shield_graphic.size = (shield_diameter, shield_diameter)
-            angle_end = 360 * (self.shield_remaining_time / 7.0)
+            angle_end = 360 * (self.shield_remaining_time / 5.0)
             self.shield_graphic.circle = (center_x, center_y, radius, 0, angle_end)
 
             for i, obstacle_dict in enumerate(self.obstacles_coordinates[:]):
@@ -764,10 +727,6 @@ class MainWidget(RelativeLayout):
                 dy = center_y - (obstacle_widget.pos[1] + obstacle_widget.size[1]/2)
                 distance = (dx**2 + dy**2)**0.5
                 if distance < shield_diameter/2 + obstacle_widget.size[0]/2:
-                    if self.sound_energy:
-                        self.sound_energy.play()
-                    if obstacle_dict.get('shield_graphic'):
-                        self.canvas.remove(obstacle_dict['shield_graphic'])
                     self.obstacles_coordinates.remove(obstacle_dict)
                     self.on_obstacle_destroyed()
 
@@ -775,18 +734,17 @@ class MainWidget(RelativeLayout):
                     explosion = Rectangle(
                         source="images/explosion.jpg",
                         pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
-                        size=(obstacle_widget.size[0] * 3, obstacle_widget.size[1] * 3)
+                        size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
                     )
                     self.explosions.append(explosion)
                     self.canvas.add(explosion)
 
                     obstacle_widget.size = (0, 0)
+                    if self.sound_explosion:
+                        self.sound_explosion.play()
                     Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
 
     def update(self, dt):
-        if self.state_game_paused:
-            return
-
         time_factor = dt*60
         self.update_vertical_lines()
         self.update_horizontal_lines()
@@ -858,7 +816,7 @@ class MainWidget(RelativeLayout):
                 # Add explosion on ship
                 ship_center_x = self.ship.pos[0] + self.ship.size[0] / 2
                 ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
-                explosion_size = self.width * self.SHIP_WIDTH * 2.0
+                explosion_size = self.width * self.SHIP_WIDTH * 1.5
                 explosion = Rectangle(
                     source="images/explosion.jpg",
                     pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
@@ -886,7 +844,7 @@ class MainWidget(RelativeLayout):
                         # Add explosion on ship
                         ship_center_x = self.ship.pos[0] + self.ship.size[0] / 2
                         ship_center_y = self.ship.pos[1] + self.ship.size[1] / 2
-                        explosion_size = self.width * self.SHIP_WIDTH * 2.0
+                        explosion_size = self.width * self.SHIP_WIDTH * 1.5
                         explosion = Rectangle(
                             source="images/explosion.jpg",
                             pos=(ship_center_x - explosion_size/2, ship_center_y - explosion_size/2),
@@ -901,8 +859,6 @@ class MainWidget(RelativeLayout):
                         else:
                             if self.sound_explosion:
                                 self.sound_explosion.play()
-                    if obstacle_dict['shield_graphic']:
-                        self.canvas.remove(obstacle_dict['shield_graphic'])
                     self.obstacles_coordinates.remove(obstacle_dict)
                     self.obstacles[i].size = (0, 0)
                     break
@@ -983,7 +939,7 @@ class MainWidget(RelativeLayout):
     def activate_shield(self):
         if not self.shield_active and not self.state_game_over and self.shield_count > 0:
             self.shield_active = True
-            self.shield_remaining_time = 7.0
+            self.shield_remaining_time = 5.0
             self.shield_count -= 1
             self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
             if self.sound_shield:
