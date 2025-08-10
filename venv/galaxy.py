@@ -181,7 +181,7 @@ class MainWidget(RelativeLayout):
 
         self.sound_music1.loop = True
         self.sound_music1.volume = 1
-        self.sound_laser.volume = .25
+        self.sound_laser.volume = .5
         self.sound_explosion.volume = 1.0
         self.sound_shield.volume = .75
         self.sound_begin.volume = .25
