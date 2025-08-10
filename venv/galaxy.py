@@ -13,9 +13,9 @@ Config.set('graphics', 'height', '600')
 from kivy import platform
 from kivy.core.window import Window
 from kivy.app import App
-from kivy.graphics.context_instructions import Color
+from kivy.graphics.context_instructions import Color, BlendMode
 from kivy.graphics.vertex_instructions import Line, Quad, Triangle, Ellipse, Rectangle
-from kivy.graphics import InstructionGroup, BlendMode
+from kivy.graphics import InstructionGroup
 from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty, BooleanProperty
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
