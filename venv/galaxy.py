@@ -481,13 +481,14 @@ class MainWidget(RelativeLayout):
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
             if obstacle_dict['has_shield']:
-                line_instruction = None
-                for instruction in obstacle_dict['shield_graphic'].children:
-                    if isinstance(instruction, Line):
-                        line_instruction = instruction
-                        break
-                if line_instruction:
-                    line_instruction.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.6)
+                if isinstance(obstacle_dict['shield_graphic'], InstructionGroup):
+                    line_instruction = None
+                    for instruction in obstacle_dict['shield_graphic'].children:
+                        if isinstance(instruction, Line):
+                            line_instruction = instruction
+                            break
+                    if line_instruction:
+                        line_instruction.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.6)
 
 
             if self.state_game_has_started and random.random() < 0.01:
