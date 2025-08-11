@@ -178,6 +178,7 @@ class MainWidget(RelativeLayout):
         self.sound_energy.volume = .75
 
     def reset_game(self):
+        self.SPEED = self.NORMAL_SPEED
         self.current_offset_y = 0
         self.current_y_loop = 0
         self.current_speed_x = 0
