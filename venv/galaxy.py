@@ -909,8 +909,8 @@ class MainWidget(RelativeLayout):
             self.shield_count += 3
             self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
 
-        if self.score >= self.last_power_up_score + 300:
-            self.last_power_up_score += 300
+        if self.score >= self.last_power_up_score + 600:
+            self.last_power_up_score += 600
             self.activate_power_up()
 
     def activate_power_up(self):
