@@ -375,19 +375,7 @@ class MainWidget(RelativeLayout):
             # This is just a simple way to generate some obstacles for now
             for i in range(10, len(self.tiles_coordinates), 20):
                 if len(self.obstacles_coordinates) < self.NB_OBSTACLES:
-                    has_shield = random.random() < 0.3
-                    obstacle_data = {'coord': self.tiles_coordinates[i], 'has_shield': has_shield, 'shield_graphic': None, 'shield_line': None, 'shield_color': None}
-                    if has_shield:
-                        shield_graphic_group = InstructionGroup()
-                        shield_color = Color(1, 0, 0, 0.5)
-                        shield_graphic_group.add(shield_color)
-                        shield_line = Line(width=2)
-                        shield_graphic_group.add(shield_line)
-                        self.canvas.add(shield_graphic_group)
-                        obstacle_data['shield_graphic'] = shield_graphic_group
-                        obstacle_data['shield_line'] = shield_line
-                        obstacle_data['shield_color'] = shield_color
-                    self.obstacles_coordinates.append(obstacle_data)
+                    self.obstacles_coordinates.append({'coord': self.tiles_coordinates[i]})
 
     def init_vertical_lines(self):
         with self.canvas:
@@ -460,10 +448,6 @@ class MainWidget(RelativeLayout):
             obstacle.size = (diameter, diameter)
             obstacle.pos = (min_x + (screen_width - diameter) / 2, min_y + (screen_height - diameter) / 2)
 
-            if obstacle_dict['has_shield']:
-                shield_line = obstacle_dict['shield_line']
-                if shield_line:
-                    shield_line.circle = (obstacle.pos[0] + diameter/2, obstacle.pos[1] + diameter/2, diameter * 0.6)
 
 
             if self.state_game_has_started and random.random() < 0.01:
@@ -593,44 +577,25 @@ class MainWidget(RelativeLayout):
 
                 if min_x < bullet_x + bullet_w and bullet_x < max_x and min_y < bullet_y + bullet_h and bullet_y < max_y:
                     # Collision
-                    if obstacle_dict['has_shield']:
-                        # Reflect bullet
-                        bullet_dict['velocity'] = -velocity
-                        if self.sound_shield:
-                            self.sound_shield.play()
-                        obstacle_dict['has_shield'] = False
-                        # Scorched earth removal
-                        shield_group = obstacle_dict['shield_graphic']
-                        shield_color = obstacle_dict['shield_color']
-                        shield_line = obstacle_dict['shield_line']
+                    self.sound_explosion.play()
+                    self.bullets.remove(bullet_dict)
+                    self.canvas.remove(bullet)
+                    self.obstacles_coordinates.remove(obstacle_dict)
+                    self.add_score(50)
 
-                        if shield_group:
-                            if shield_color:
-                                shield_color.rgba = (0, 0, 0, 0)
-                            if shield_line:
-                                shield_line.points = []
-                            shield_group.clear()
-                            self.canvas.remove(shield_group)
-                    else:
-                        self.sound_explosion.play()
-                        self.bullets.remove(bullet_dict)
-                        self.canvas.remove(bullet)
-                        self.obstacles_coordinates.remove(obstacle_dict)
-                        self.on_obstacle_destroyed()
+                    # Add explosion
+                    explosion = Rectangle(
+                        source="images/explosion.jpg",
+                        pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
+                        size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
+                    )
+                    self.explosions.append(explosion)
+                    self.canvas.add(explosion)
 
-                        # Add explosion
-                        explosion = Rectangle(
-                            source="images/explosion.jpg",
-                            pos=(obstacle_widget.pos[0] - obstacle_widget.size[0] / 2, obstacle_widget.pos[1] - obstacle_widget.size[1] / 2),
-                            size=(obstacle_widget.size[0] * 2, obstacle_widget.size[1] * 2)
-                        )
-                        self.explosions.append(explosion)
-                        self.canvas.add(explosion)
+                    # "Remove" obstacle by making it size 0
+                    obstacle_widget.size = (0, 0)
 
-                        # "Remove" obstacle by making it size 0
-                        obstacle_widget.size = (0, 0)
-
-                        Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
+                    Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
                     break
 
     def update_enemy_lasers(self):
