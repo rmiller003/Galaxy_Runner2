@@ -376,20 +376,18 @@ class MainWidget(RelativeLayout):
             for i in range(10, len(self.tiles_coordinates), 20):
                 if len(self.obstacles_coordinates) < self.NB_OBSTACLES:
                     has_shield = random.random() < 0.3
-                    shield_graphic_group = None
-                    shield_line = None
+                    obstacle_data = {'coord': self.tiles_coordinates[i], 'has_shield': has_shield, 'shield_graphic': None, 'shield_line': None, 'shield_color': None}
                     if has_shield:
                         shield_graphic_group = InstructionGroup()
-                        shield_graphic_group.add(Color(1, 0, 0, 0.5))
+                        shield_color = Color(1, 0, 0, 0.5)
+                        shield_graphic_group.add(shield_color)
                         shield_line = Line(width=2)
                         shield_graphic_group.add(shield_line)
                         self.canvas.add(shield_graphic_group)
-                    self.obstacles_coordinates.append({
-                        'coord': self.tiles_coordinates[i],
-                        'has_shield': has_shield,
-                        'shield_graphic': shield_graphic_group,
-                        'shield_line': shield_line
-                    })
+                        obstacle_data['shield_graphic'] = shield_graphic_group
+                        obstacle_data['shield_line'] = shield_line
+                        obstacle_data['shield_color'] = shield_color
+                    self.obstacles_coordinates.append(obstacle_data)
 
     def init_vertical_lines(self):
         with self.canvas:
@@ -601,11 +599,12 @@ class MainWidget(RelativeLayout):
                         if self.sound_shield:
                             self.sound_shield.play()
                         obstacle_dict['has_shield'] = False
-                        shield_group = obstacle_dict['shield_graphic']
-                        if shield_group:
+                        shield_color = obstacle_dict['shield_color']
+                        shield_line = obstacle_dict['shield_line']
+                        if shield_color and shield_line:
                             # Make invisible instead of removing
-                            shield_group.children[0].rgba = (0, 0, 0, 0)
-                            shield_group.children[1].points = []
+                            shield_color.rgba = (0, 0, 0, 0)
+                            shield_line.points = []
                     else:
                         self.sound_explosion.play()
                         self.bullets.remove(bullet_dict)
@@ -661,6 +660,9 @@ class MainWidget(RelativeLayout):
                 if distance < shield_diameter / 2:
                     laser_dict['velocity_y'] = -velocity # Reflect
                     laser_dict['color'].rgb = self.CYAN
+                    # Speculative fix for player shield reflections
+                    self.canvas.remove(self.shield_instruction_group)
+                    self.canvas.add(self.shield_instruction_group)
                     continue
 
             # Collision with obstacles (only for reflected lasers)
