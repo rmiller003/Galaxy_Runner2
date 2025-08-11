@@ -109,6 +109,7 @@ class MainWidget(RelativeLayout):
     sound_orange = None
     sound_laser_zap = None
     sound_powerup = None
+    sound_energy = None
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
@@ -157,6 +158,7 @@ class MainWidget(RelativeLayout):
         self.sound_orange = SoundLoader.load("audio/orange.wav")
         self.sound_laser_zap = SoundLoader.load("audio/laser-zap.wav")
         self.sound_powerup = SoundLoader.load("audio/powerup.wav")
+        self.sound_energy = SoundLoader.load("audio/energy.wav")
 
 
         self.sound_music1.loop = True
@@ -172,6 +174,7 @@ class MainWidget(RelativeLayout):
         self.sound_orange.volume = .25
         self.sound_laser_zap.volume = .25
         self.sound_powerup.volume = 1.0
+        self.sound_energy.volume = .75
 
     def reset_game(self):
         self.current_offset_y = 0
@@ -749,8 +752,8 @@ class MainWidget(RelativeLayout):
                     self.canvas.add(explosion)
 
                     obstacle_widget.size = (0, 0)
-                    if self.sound_explosion:
-                        self.sound_explosion.play()
+                    if self.sound_energy:
+                        self.sound_energy.play()
                     Clock.schedule_once(lambda dt: self.remove_explosion(explosion), 0.5)
 
     def update(self, dt):
