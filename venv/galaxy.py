@@ -235,6 +235,8 @@ class MainWidget(RelativeLayout):
         elif key == 32: # spacebar
             self.fire_laser()
         elif key == 273: # up arrow
+            if self.sound_shield:
+                self.sound_shield.play()
             self.activate_shield()
         return True
 
@@ -958,8 +960,6 @@ class MainWidget(RelativeLayout):
             self.shield_remaining_time = 5.0
             self.shield_count -= 1
             self.shield_count_txt = "SHIELDS: " + str(self.shield_count)
-            if self.sound_shield:
-                self.sound_shield.play()
             self.canvas.add(self.shield_instruction_group)
 
     def deactivate_shield(self):
