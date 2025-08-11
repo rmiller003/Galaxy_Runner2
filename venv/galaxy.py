@@ -363,8 +363,6 @@ class MainWidget(RelativeLayout):
         # Generate obstacles
         for i in range(len(self.obstacles_coordinates) - 1, -1, -1):
             if self.obstacles_coordinates[i]['coord'][1] < self.current_y_loop:
-                if self.obstacles_coordinates[i]['shield_graphic']:
-                    self.canvas.remove(self.obstacles_coordinates[i]['shield_graphic'])
                 del self.obstacles_coordinates[i]
 
         if len(self.obstacles_coordinates) == 0:
