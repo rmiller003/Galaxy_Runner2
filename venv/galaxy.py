@@ -658,11 +658,11 @@ class MainWidget(RelativeLayout):
                 laser_y = laser.points[1]
                 distance = ((laser_x - center_x)**2 + (laser_y - center_y)**2)**0.5
                 if distance < shield_diameter / 2:
-                    laser_dict['velocity_y'] = -velocity # Reflect
-                    laser_dict['color'].rgb = self.CYAN
-                    # Speculative fix for player shield reflections
-                    self.canvas.remove(self.shield_instruction_group)
-                    self.canvas.add(self.shield_instruction_group)
+                    # Absorb laser (diagnostic)
+                    if self.sound_shield:
+                        self.sound_shield.play()
+                    self.enemy_lasers.remove(laser_dict)
+                    self.canvas.remove(laser_dict['group'])
                     continue
 
             # Collision with obstacles (only for reflected lasers)
