@@ -599,12 +599,9 @@ class MainWidget(RelativeLayout):
                         if self.sound_shield:
                             self.sound_shield.play()
                         obstacle_dict['has_shield'] = False
-                        shield_color = obstacle_dict['shield_color']
-                        shield_line = obstacle_dict['shield_line']
-                        if shield_color and shield_line:
-                            # Make invisible instead of removing
-                            shield_color.rgba = (0, 0, 0, 0)
-                            shield_line.points = []
+                        shield_group = obstacle_dict['shield_graphic']
+                        if shield_group:
+                            shield_group.clear()
                     else:
                         self.sound_explosion.play()
                         self.bullets.remove(bullet_dict)
@@ -658,11 +655,29 @@ class MainWidget(RelativeLayout):
                 laser_y = laser.points[1]
                 distance = ((laser_x - center_x)**2 + (laser_y - center_y)**2)**0.5
                 if distance < shield_diameter / 2:
-                    # Absorb laser (diagnostic)
+                    # Re-creation fix for player shield reflections
                     if self.sound_shield:
                         self.sound_shield.play()
+
+                    # Destroy old laser
                     self.enemy_lasers.remove(laser_dict)
                     self.canvas.remove(laser_dict['group'])
+
+                    # Create new reflected laser
+                    laser_group = InstructionGroup()
+                    laser_color = Color(*self.CYAN)
+                    x = laser.points[0]
+                    y = laser.points[1]
+                    laser_widget = Line(points=[x, y, x, y + 10], width=2) # Note: this will move up
+                    laser_group.add(laser_color)
+                    laser_group.add(laser_widget)
+                    self.canvas.add(laser_group)
+                    self.enemy_lasers.append({
+                        'group': laser_group,
+                        'widget': laser_widget,
+                        'color': laser_color,
+                        'velocity_y': -velocity
+                    })
                     continue
 
             # Collision with obstacles (only for reflected lasers)
