@@ -41,6 +41,7 @@ class MainWidget(RelativeLayout):
     H_LINES_SPACING = .1  # percentage' in screen height
     horizontal_lines = []
 
+    NORMAL_SPEED = .8
     SPEED = .8
     current_offset_y = 0
     current_y_loop = 0
@@ -914,9 +915,11 @@ class MainWidget(RelativeLayout):
         self.power_up_remaining_time = POWER_UP_DURATION
         if self.sound_powerup:
             self.sound_powerup.play()
+        self.SPEED = self.NORMAL_SPEED * 1.5
 
     def deactivate_power_up(self):
         self.power_up_active = False
+        self.SPEED = self.NORMAL_SPEED
 
     def remove_explosion(self, explosion):
         if explosion in self.explosions:
