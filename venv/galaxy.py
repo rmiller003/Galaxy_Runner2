@@ -599,9 +599,18 @@ class MainWidget(RelativeLayout):
                         if self.sound_shield:
                             self.sound_shield.play()
                         obstacle_dict['has_shield'] = False
+                        # Scorched earth removal
                         shield_group = obstacle_dict['shield_graphic']
+                        shield_color = obstacle_dict['shield_color']
+                        shield_line = obstacle_dict['shield_line']
+
                         if shield_group:
+                            if shield_color:
+                                shield_color.rgba = (0, 0, 0, 0)
+                            if shield_line:
+                                shield_line.points = []
                             shield_group.clear()
+                            self.canvas.remove(shield_group)
                     else:
                         self.sound_explosion.play()
                         self.bullets.remove(bullet_dict)
