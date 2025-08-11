@@ -596,17 +596,16 @@ class MainWidget(RelativeLayout):
                 if min_x < bullet_x + bullet_w and bullet_x < max_x and min_y < bullet_y + bullet_h and bullet_y < max_y:
                     # Collision
                     if obstacle_dict['has_shield']:
-                        # Absorb bullet
-                        self.bullets.remove(bullet_dict)
-                        self.canvas.remove(bullet_dict['widget'])
-
-                        # Remove shield
+                        # Reflect bullet
+                        bullet_dict['velocity'] = -velocity
                         if self.sound_shield:
                             self.sound_shield.play()
                         obstacle_dict['has_shield'] = False
-                        if obstacle_dict['shield_graphic']:
-                            obstacle_dict['shield_graphic'].clear()
-                            self.canvas.remove(obstacle_dict['shield_graphic'])
+                        shield_group = obstacle_dict['shield_graphic']
+                        if shield_group:
+                            # Make invisible instead of removing
+                            shield_group.children[0].rgba = (0, 0, 0, 0)
+                            shield_group.children[1].points = []
                     else:
                         self.sound_explosion.play()
                         self.bullets.remove(bullet_dict)
@@ -660,11 +659,8 @@ class MainWidget(RelativeLayout):
                 laser_y = laser.points[1]
                 distance = ((laser_x - center_x)**2 + (laser_y - center_y)**2)**0.5
                 if distance < shield_diameter / 2:
-                    # Absorb laser
-                    if self.sound_shield:
-                        self.sound_shield.play()
-                    self.enemy_lasers.remove(laser_dict)
-                    self.canvas.remove(laser_dict['group'])
+                    laser_dict['velocity_y'] = -velocity # Reflect
+                    laser_dict['color'].rgb = self.CYAN
                     continue
 
             # Collision with obstacles (only for reflected lasers)
@@ -736,7 +732,7 @@ class MainWidget(RelativeLayout):
 
     def update_shield(self):
         if self.shield_active:
-            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5 * 0.6
+            shield_diameter = (self.ship.size[0]**2 + self.ship.size[1]**2)**0.5 * 0.75
             center_x = self.ship.pos[0] + self.ship.size[0] / 2
             center_y = self.ship.pos[1] + self.ship.size[1] / 2
 
