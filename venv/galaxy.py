@@ -187,9 +187,6 @@ class MainWidget(RelativeLayout):
             self.canvas.remove(explosion)
         for laser_dict in self.enemy_lasers:
             self.canvas.remove(laser_dict['group'])
-        for obstacle_dict in self.obstacles_coordinates:
-            if obstacle_dict['shield_graphic']:
-                self.canvas.remove(obstacle_dict['shield_graphic'])
 
         self.obstacles_coordinates = []
         self.lasers = []
