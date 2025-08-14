@@ -5,6 +5,19 @@ from kivy.core.audio import SoundLoader
 from kivy.lang import Builder
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.properties import BooleanProperty
+import sys
+import os
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 
 
 Config.set('graphics', 'width', '1200')
@@ -19,7 +32,7 @@ from kivy.graphics import InstructionGroup
 from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty, BooleanProperty
 from kivy.uix.widget import Widget
 
-Builder.load_file("menu.kv")
+Builder.load_file(resource_path("menu.kv"))
 
 POWER_UP_DURATION = 7.0
 
